@@ -42,4 +42,55 @@ It is lightweight, offline-capable, and customizable.
 
 ---
 
-## 📂 Project Structure  
+
+## 📖 How It Works  
+1. 🎶 Add songs with title, artist, duration, and mood.  
+2. 🔀 Shuffle or sort playlist based on mood.  
+3. 📊 View playlist stats and mood suggestions.  
+4. ⏯️ Play next/previous song easily.  
+5. 📤 Export playlist to text/CSV file.  
+
+---
+
+## 🎯 Why Doubly Linked List?  
+✔️ Fast add/remove anywhere in playlist  
+✔️ Easy forward & backward traversal  
+✔️ Perfect for dynamic rearranging by mood  
+
+---
+
+## 📅 Development Timeline (6 Days)  
+- **Day 1–2:** Implement linked list (add/remove/search).  
+- **Day 3:** Add mood sorting + shuffle.  
+- **Day 4:** Add user commands + playlist save.  
+- **Day 5:** Add advanced features (mood tags, stats).  
+- **Day 6:** Testing + documentation.  
+
+---
+
+## 📊 Comparison with Other Apps  
+| Feature              | Spotify | YouTube Music | Moodify |
+|----------------------|---------|----------------|---------|
+| AI Mood Sorting      | ✅      | ❌             | ✅      |
+| Offline Support      | ❌      | ❌             | ✅      |
+| Lightweight (console)| ❌      | ❌             | ✅      |
+| Collaborative List   | ✅      | ❌             | ✅      |
+| Custom Mood Tags     | ❌      | ❌             | ✅      |
+
+---
+
+## 👨‍💻 Team Members  
+- 👤 W. C. L. M. Weliwita  
+- 👤 L. K. A. S. R. Wimalarathna  
+- 👤 S. J. G. Samarasinghe  
+- 👤 J. G. W. Deminda  
+
+---
+
+## 📜 License  
+This project is created for **academic purposes** at  
+**National Institute of Business Management (NIBM)**.  
+
+---
+
+✨ *Moodify – Organize your playlist, match your mood.* ✨
