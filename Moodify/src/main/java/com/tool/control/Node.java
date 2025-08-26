@@ -36,4 +36,12 @@ public class Node {
     public void setMoodScore(int moodScore) {
         this.moodScore = moodScore;
     }
+
+    //new toString() method add
+    @Override
+    public String toString(){
+        return "Song: " + songName + '\'' +
+                "Artist: " + artistName +
+                "Mood: " + moodScore;
+    }
 }
