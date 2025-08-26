@@ -16,6 +16,19 @@ public class DoublyLinkedList {
                         head = newNode;
                 }
         }
+        //new overloaded method(Sa)
+        public final void insertBeginning(String songName, String artistName, String songPath, int moodScore){
+                Node newNode = new Node(songName,artistName,songPath, moodScore); //new constructor
+                if (head == null){
+                        head = newNode;
+                        tail = newNode;
+                }
+                else{
+                        head.previousNode = newNode;
+                        newNode.nextNode = head;
+                        head = newNode;
+                }
+        }
 
         public final void insertEnd(String songName,String artistName, String songPath){
                 Node newNode = new Node(songName,artistName,songPath);
@@ -23,6 +36,19 @@ public class DoublyLinkedList {
                 if(tail == null ){
                        head = newNode;
                        tail = newNode;
+                }
+                else{
+                        tail.nextNode = newNode;
+                        newNode.previousNode = tail;
+                        tail = newNode;
+                }
+        }
+        //new overloaded method(Sa)
+        public final void insertEnd(String songName, String artistName, String songPath, int moodScore){
+                Node newNode = new Node(songName, artistName, songPath, moodScore); //use new constructor
+                if(tail == null){
+                        head = newNode;
+                        tail = newNode;
                 }
                 else{
                         tail.nextNode = newNode;
