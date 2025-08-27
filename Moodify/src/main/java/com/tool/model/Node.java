@@ -1,8 +1,8 @@
-package com.tool.control;
+package com.tool.model;
 
 public class Node {
-    Node nextNode;
-    Node previousNode;
+    public Node nextNode;
+    public Node previousNode;
 
     public String songName;
     public String artistName;

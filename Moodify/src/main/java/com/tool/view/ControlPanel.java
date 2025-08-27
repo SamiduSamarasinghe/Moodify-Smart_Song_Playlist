@@ -1,6 +1,6 @@
-package com.tool.gui;
+package com.tool.view;
 
-import com.tool.control.DoublyLinkedList;
+import com.tool.model.DoublyLinkedList;
 import com.tool.control.MoodShuffler;
 import javax.swing.*;
 import java.awt.*;

@@ -1,7 +1,7 @@
-package com.tool.gui;
+package com.tool.view;
 
-import com.tool.control.DoublyLinkedList;
-import com.tool.control.Node;
+import com.tool.model.DoublyLinkedList;
+import com.tool.model.Node;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;

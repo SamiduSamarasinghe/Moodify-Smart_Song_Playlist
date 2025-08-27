@@ -1,5 +1,7 @@
 package com.tool.control;
 
+import com.tool.model.DoublyLinkedList;
+
 public class TestMoodShuffle {
     public static void main(String[] args){
         DoublyLinkedList myPlaylist = new DoublyLinkedList();
