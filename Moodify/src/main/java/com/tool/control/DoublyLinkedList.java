@@ -149,4 +149,25 @@ public class DoublyLinkedList {
                         return;
                 }
         }
+        //add new methods(Sa)
+        public Node getNodeAt(int index) {
+                if (index < 0 || index >= length()) return null;
+
+                Node current = head;
+                for (int i = 0; i < index; i++) {
+                        current = current.nextNode;
+                }
+                return current;
+        }
+        //add getAllNodes method(Sa)
+        public List<Node> getAllNodes(){
+                List<Node> nodes = new ArrayList<>();
+                Node current = head;
+                while (current != null){
+                        nodes.add(current);
+                        current = current.nextNode;
+                }
+                return nodes;
+        }
+
 }

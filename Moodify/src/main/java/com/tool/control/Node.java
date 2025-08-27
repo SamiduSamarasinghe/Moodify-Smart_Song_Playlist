@@ -4,9 +4,9 @@ public class Node {
     Node nextNode;
     Node previousNode;
 
-    String songName;
-    String artistName;
-    String songPath;
+    public String songName;
+    public String artistName;
+    public String songPath;
     int moodScore; //new field added(Sa)
 
 
