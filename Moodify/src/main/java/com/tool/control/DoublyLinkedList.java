@@ -159,5 +159,15 @@ public class DoublyLinkedList {
                 }
                 return current;
         }
+        //add getAllNodes method(Sa)
+        public List<Node> getAllNodes(){
+                List<Node> nodes = new ArrayList<>();
+                Node current = head;
+                while (current != null){
+                        nodes.add(current);
+                        current = current.nextNode;
+                }
+                return nodes;
+        }
 
 }
