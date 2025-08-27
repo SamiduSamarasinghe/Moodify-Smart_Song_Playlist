@@ -1,5 +1,8 @@
 package com.tool.control;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DoublyLinkedList {
         Node head;
         Node tail;
@@ -90,21 +93,29 @@ public class DoublyLinkedList {
                         tail.nextNode = null;
                 }
         }
+        //Updated -- added return type
+        public List<Node> printForward(){
+                List<Node> playList = new ArrayList<>();
 
-        public void printForward(){
                 Node current_node = head;
                 while(current_node != null){
                         System.out.println(current_node);
+                        playList.add(current_node);
                         current_node = current_node.nextNode;
                 }
+                return playList;
         }
 
-        public void printBackward(){
+        //Updated -- added return type
+        public List<Node> printBackward(){
+                List<Node> playList = new ArrayList<>();
                 Node current_node = tail;
                 while(current_node != null){
                         System.out.println(current_node);
+                        playList.add(current_node);
                         current_node = current_node.previousNode;
                 }
+                return playList;
         }
 
         public final int length(){
@@ -123,6 +134,7 @@ public class DoublyLinkedList {
                 tail = null;
                 System.out.println("List Cleared");
         }
+
 
         public void searchBySongName(String songName){
                 if(head != null){
