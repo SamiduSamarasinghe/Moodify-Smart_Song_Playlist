@@ -1,11 +1,11 @@
-package com.tool.control;
+package com.tool.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DoublyLinkedList {
-        Node head;
-        Node tail;
+        public Node head;
+        public Node tail;
 
         public final void insertBeginning(String songName,String artistName, String songPath){
                 Node newNode = new Node(songName,artistName,songPath);
