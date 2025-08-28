@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 
 
 public class MainFrame extends JFrame {
@@ -43,6 +46,8 @@ public class MainFrame extends JFrame {
     
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
+    
+    
 
 
     public MainFrame() {
@@ -211,11 +216,31 @@ public class MainFrame extends JFrame {
         searchPanel.add(searchField);
         JButton searchButton = new JButton("Go");
         searchPanel.add(searchButton);
+        
+        //add favorite filter button
+        JButton favoritesButton = new JButton("⭐ Favorites");
+        favoritesButton.addActionListener(e -> showFavorites());
+        searchPanel.add(favoritesButton);
+        
         panel.add(searchPanel, BorderLayout.NORTH);
+
 
         // The main playlist display
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
+        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (e.getClickCount() == 2) { //double click
+                int index = playListJList.locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    toggleFavorite(index);
+                }
+            }
+        }
+        });
+        
+        
         JScrollPane scrollPane = new JScrollPane(playListJList);
         scrollPane.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -429,6 +454,46 @@ public class MainFrame extends JFrame {
             isPlaying = false;
             updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
+        }
+    }
+    
+    private Node getNodeAtIndex(int index) {
+        if (playlist == null || index < 0) return null;
+    
+        Node current = playlist.head;
+        int currentIndex = 0;
+    
+        while (current != null && currentIndex < index) {
+            current = current.nextNode;
+            currentIndex++;
+        }
+    
+        return current; // This will be null if index is out of bounds
+    }
+    
+    private void savePlaylist() {
+        PlaylistSaveHelper.savePlaylistToFile(playlist);
+    }
+    
+   
+    private void toggleFavorite(int index){
+        Node node = getNodeAtIndex(index);
+        if (node != null) {
+            node.setFavorite(!node.isFavorite());
+            updatePlayListDisplay();
+            savePlaylist();
+        }
+    }
+    private void showFavorites() {
+        listModel.clear();
+        Node current = playlist.head;
+        while (current != null){
+            if (current.isFavorite()){
+                String songInfo = "⭐ " + current.songName + " - " + current.artistName +
+                        " [ " + current.getMoodScore() + " ] ";
+                listModel.addElement(songInfo);
+            }
+            current = current.nextNode;
         }
     }
     

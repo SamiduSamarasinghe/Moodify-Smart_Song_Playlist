@@ -15,7 +15,13 @@ public class Node implements Serializable {
     int moodScore;
     // Add duration field
     private int duration; // in seconds
+    
+    private boolean isFavorite = false; //for favorite songs 
 
+    
+    public boolean isFavorite() {return isFavorite; }
+    public void setFavorite(boolean favorite) {isFavorite = favorite; }
+    
     // Updated constructor to include duration
    /* public Node(String songName, String artistName, String songPath, int duration) {
         this.songName = songName;
@@ -32,6 +38,7 @@ public class Node implements Serializable {
         this.songPath = songPath;
         this.duration = duration;
         this.moodScore = moodScore;
+        this.isFavorite = false;
     }
 
     public int getMoodScore() {
