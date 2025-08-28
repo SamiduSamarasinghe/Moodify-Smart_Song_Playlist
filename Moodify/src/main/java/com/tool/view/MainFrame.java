@@ -40,6 +40,9 @@ public class MainFrame extends JFrame {
     
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
+    
+    private boolean autoPlayEnabled = false;
+    private Timer autoPlayTimer; // for smart auto play
 
 
     public MainFrame() {
@@ -222,6 +225,11 @@ public class MainFrame extends JFrame {
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new FlowLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Playlist Controls"));
+        
+        //add auto-play checkbox
+        JCheckBox autoPlayCheckbox = new JCheckBox("Auto-Play");
+        autoPlayCheckbox.addActionListener(e -> autoPlayEnabled = autoPlayCheckbox.isSelected());
+        panel.add(autoPlayCheckbox);
 
         String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Clear All"};
         for (String label : buttonLabels) {
