@@ -10,7 +10,8 @@ import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 
 import com.tool.control.MoodShuffler;
-import com.tool.control.PlayListSorter;
+import com.tool.control.PlaylistSaveHelper;
+import com.tool.control.PlaylistSorter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,7 +26,7 @@ public class MainFrame extends JFrame {
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
-    private PlayListSorter playListSorter;
+    private PlaylistSorter playlistSorter;
     
     //input feilds
     private JTextField titleTextField;
@@ -42,18 +43,16 @@ public class MainFrame extends JFrame {
 
 
     public MainFrame() {
-        playlist = new DoublyLinkedList();
-        playListSorter = new PlayListSorter();
-        loadPlaylistFromFile();
-        playListSorter = new PlayListSorter();
-    initializeUI();
-    updatePlayListDisplay();
+        playlist = PlaylistSaveHelper.loadPlaylistFromFile();
+        playlistSorter = new PlaylistSorter();
+        initializeUI();
+        updatePlayListDisplay();
     
     // Add window listener to save on exit
     addWindowListener(new java.awt.event.WindowAdapter() {
         @Override
         public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-            savePlaylistToFile();
+            PlaylistSaveHelper.savePlaylistToFile(playlist);
         }
     });
 
@@ -175,7 +174,9 @@ public class MainFrame extends JFrame {
     playlist.insertSong(title, artist, durationInSeconds, url, moodScore);
     
     // SAVE THE PLAYLIST IMMEDIATELY AFTER ADDING THE SONG
-    savePlaylistToFile();
+    PlaylistSaveHelper.savePlaylistToFile(playlist);
+    
+   
     
     // Clear input fields
     titleTextField.setText("");
@@ -222,7 +223,7 @@ public class MainFrame extends JFrame {
         JPanel panel = new JPanel(new FlowLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Playlist Controls"));
 
-        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort by Mood", "Mood Shuffle", "Clear All"};
+        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Clear All"};
         for (String label : buttonLabels) {
             JButton button = new JButton(label);
             
@@ -246,49 +247,50 @@ public class MainFrame extends JFrame {
                 case "Clear All":
                     button.addActionListener(e -> clearPlaylist());
                     break;
+                case "Sort":
+                    button.addActionListener(e-> perfromMoodSort());
+                    break;
                 default:
-                    //for sort by mood and others, add placeholder
-                    button.addActionListener(e -> perfromMoodSort());
-            }
-            
-            if(label.equals("Sort by Mood")){
-                button.addActionListener(e -> perfromMoodSort());
-            }
-            
+                    break;
+            }            
             panel.add(button);
         }
         return panel;
     }
     
     private void perfromMoodSort(){
-        String[] moodList = {"Calm","Neutral","Energetic"};
+        String[] sortOptions = {"Sort By Mood","Sort By Duration"};
         
-        //show list to select a mood and get the selected mood as a string
-        String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a mood to sort by",
-                "Mood Sort",JOptionPane.QUESTION_MESSAGE,null,moodList,moodList[0]);
-       
-        playListSorter.sortByMood(playlist,selectedMood);
+        int result = JOptionPane.showOptionDialog(
+                null,"Select Sorting Method","Sort Options",
+                JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE,null,sortOptions,sortOptions[0]);
         
-        /* For Debuging
+        //sort by Mood
+        if(result == 0){
+            String[] moodList = {"Calm","Neutral","Energetic"};
+        
+            //show list to select a mood and get the selected mood as a string
+            String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a mood to sort by",
+                    "Mood Sort",JOptionPane.QUESTION_MESSAGE,null,moodList,moodList[0]);
 
-        // 3. Print original playlist
-        System.out.println("Original Playlist:");
-        Node current = playlist.head;
-        while (current != null) {
-            System.out.println(current.songName + " [" + current.getMoodScore() + "]");
-            current = current.nextNode;
+            playlistSorter.sortByMood(playlist,selectedMood);
+            updatePlayListDisplay();
         }
-        
-
-        playListSorter.sortByMood(playlist,selectedMood);
-
-        System.out.println("Sorted Playlist:");
-        current = playlist.head;
-        while (current != null) {
-            System.out.println(current.songName + " [" + current.getMoodScore() + "]");
-            current = current.nextNode;
+        //sort by Duration
+        else{
+            String[] timeOptions = {"Accending Order","Deccending Order"};
+            
+            String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a Option to sort by",
+            "Time Sort",JOptionPane.QUESTION_MESSAGE,null,timeOptions,timeOptions[0]);
+            
+            if(selectedMood == "Accending Order"){
+                playlistSorter.sortByTime(playlist, true);
+            }
+            else{
+                playlistSorter.sortByTime(playlist, false);
+            }
+            updatePlayListDisplay();
         }
-        */
     }
     
     // YOUR METHOD TO HANDLE THE SHUFFLE
@@ -296,7 +298,7 @@ public class MainFrame extends JFrame {
         // This is where you call your MoodShuffler code
         if (playlist != null && playlist.head != null) {
             // For now, using defaults. You can add a dialog to choose mood/intensity later.
-            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, MoodShuffler.INTENSITY_MEDIUM);
+            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, MoodShuffler.INTENSITY_LIGHT);
             updatePlayListDisplay(); // Refresh the JList
             JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
         } else {
@@ -310,7 +312,8 @@ public class MainFrame extends JFrame {
             Node current = playlist.head;
             while (current != null) {
                 String songInfo = current.songName + " - " + current.artistName + 
-                        " [ " + current.getMoodScore() + " ] ";
+                        " [ " + current.getMoodScore() + " ] "+ " - "
+                        + playlistSorter.formatDuration(current.getDuration());
                 
                 //add play icon to show current playing song
                 if (current == currentNode && isPlaying){
@@ -380,77 +383,10 @@ public class MainFrame extends JFrame {
         }
     }
     
-    
-    
-    
     public static void main(String[] args) {
         // Use this to start your application
         SwingUtilities.invokeLater(() -> new MainFrame());
-    }
-    
-        // Save playlist to file automatically on exit
-    private void savePlaylistToFile() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("playlist.dat"))) {
-            oos.writeObject(playlist);
-            System.out.println("Playlist automatically saved to playlist.dat");
-        } catch (IOException ex) {
-            System.out.println("Error saving playlist: " + ex.getMessage());
-        }
-    }
-
-    // Load playlist from file automatically on startup
-    private void loadPlaylistFromFile() {
-        File file = new File("playlist.dat");
-        if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                playlist = (DoublyLinkedList) ois.readObject();
-                System.out.println("Playlist loaded from file successfully!");
-            } catch (IOException | ClassNotFoundException ex) {
-                System.out.println("Error loading playlist: " + ex.getMessage());
-                playlist = new DoublyLinkedList(); // Create new if load fails
-            }
-        } else {
-            playlist = new DoublyLinkedList(); // Create new if no file exists
-        }
-    }
-
-    // Manual save with file chooser
-    private void savePlaylist() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save Playlist");
-        
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-                oos.writeObject(playlist);
-                JOptionPane.showMessageDialog(this, "Playlist saved successfully!");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Error saving playlist: " + ex.getMessage(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    // Manual load with file chooser
-    private void loadPlaylist() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Load Playlist");
-        
-        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                playlist = (DoublyLinkedList) ois.readObject();
-                updatePlayListDisplay();
-                JOptionPane.showMessageDialog(this, "Playlist loaded successfully!");
-            } catch (IOException | ClassNotFoundException ex) {
-                JOptionPane.showMessageDialog(this, "Error loading playlist: " + ex.getMessage(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
-    
-    
+    }    
 }
 
 /*

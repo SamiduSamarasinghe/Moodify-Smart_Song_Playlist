@@ -132,7 +132,7 @@ public class MoodShuffler {
     // Helper method to add a list of nodes to the end of the playlist
     private static void addNodeListToEnd(DoublyLinkedList playlist, List<Node> nodes) {
         for (Node node : nodes) {
-            playlist.insertEnd(node.songName, node.artistName, node.songPath, node.getMoodScore());
+            playlist.insertEnd(node.songName, node.artistName, node.songPath,node.getDuration(), node.getMoodScore());
         }
     }
 

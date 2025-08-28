@@ -5,33 +5,61 @@ import com.tool.model.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlayListSorter {
+public class PlaylistSorter {
    
-    public void sortByMood(DoublyLinkedList currentPlayList,String mood){
+    public void sortByMood(DoublyLinkedList currentPlaylist,String mood){
         switch(mood){
             case "Calm":
-                sort(currentPlayList, true);
+                sort(currentPlaylist, true);
                 break;
             case "Neutral":
-                sortNeutral(currentPlayList);
+                sortNeutral(currentPlaylist);
                 break;
                 
             case "Energetic":
-                sort(currentPlayList, false);
+                sort(currentPlaylist, false);
                 break;
             default:
                 return;
         }
     }
-        
-    private void sort(DoublyLinkedList playList,boolean ascending){
-        
-        if(playList.head == null){return;} // empty playlist
+    
+    public void sortByTime(DoublyLinkedList currentPlaylist,boolean byAscedingOrder){
+        if(currentPlaylist.head == null){return;} // empty playlist
         boolean swaped ;
         
         do{
             swaped = false;
-            Node currentNode = playList.head;
+            Node currentNode = currentPlaylist.head;
+            
+            //loop-throught all the nodes in the linkedList
+            while(currentNode.nextNode != null){
+             
+                //compare currentNodes mood socre with next Nodes moodScore
+                if(byAscedingOrder && currentNode.getDuration()> currentNode.nextNode.getDuration()){
+                    swapData(currentNode,currentNode.nextNode);
+                    swaped = true;
+                }
+                
+                else if(!byAscedingOrder && currentNode.getDuration()< currentNode.nextNode.getDuration()){
+                    swapData(currentNode.nextNode, currentNode);
+                    swaped = true;
+                }
+                
+                //increment
+                currentNode = currentNode.nextNode;
+            }
+        }while(swaped);        
+    }
+        
+    private void sort(DoublyLinkedList playlist,boolean ascending){
+        
+        if(playlist.head == null){return;} // empty playlist
+        boolean swaped ;
+        
+        do{
+            swaped = false;
+            Node currentNode = playlist.head;
             
             //loop-throught all the nodes in the linkedList
             while(currentNode.nextNode != null){
@@ -61,6 +89,7 @@ public class PlayListSorter {
         String tempSongPath = firstNode.songPath;
         String tempArtistName = firstNode.artistName;
         int tempMoodScore = firstNode.getMoodScore();
+        int tempDuratoin = firstNode.getDuration();
         
         
         //apply second node values to firstNode
@@ -68,13 +97,15 @@ public class PlayListSorter {
         firstNode.songPath = secondNode.songPath;
         firstNode.artistName = secondNode.artistName;
         firstNode.setMoodScore(secondNode.getMoodScore());
-
+        firstNode.setDuration(secondNode.getDuration());
+        
         
         //apply first node values to secondNode
         secondNode.songName = tempSongName;
         secondNode.songPath = tempSongPath;
         secondNode.artistName = tempArtistName;
         secondNode.setMoodScore(tempMoodScore);
+        secondNode.setDuration(tempDuratoin);
     }
     
     private void sortNeutral(DoublyLinkedList playList){
@@ -90,7 +121,7 @@ public class PlayListSorter {
              
                 //Math.abs use to get the absolute value
                 //compare distens between currentNodes mood socre to 5 and nextNode mood score to 5 swap if there is less distance
-                if(Math.abs(currentNode.getMoodScore()-5) > Math.abs(currentNode.nextNode.getMoodScore() -5)){
+                if(Math.abs(currentNode.getMoodScore()-3) > Math.abs(currentNode.nextNode.getMoodScore() -3)){
                     swapData(currentNode, currentNode.nextNode);
                     swaped = true;
                 }
@@ -98,5 +129,13 @@ public class PlayListSorter {
                 currentNode = currentNode.nextNode;
             }
         }while(swaped);
+    }
+    
+    //get time converted back to a string
+    public String formatDuration(int totalSeconds){
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        
+        return String.format("%d:%02d", minutes,seconds);
     }
 }
