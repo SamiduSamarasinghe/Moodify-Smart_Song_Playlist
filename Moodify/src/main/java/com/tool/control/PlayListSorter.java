@@ -6,65 +6,97 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlayListSorter {
-
-    public void sortByMood(DoublyLinkedList currentPlaylist,String mood){
-        
-        if(currentPlaylist != null){
-            switch(mood){
-                case "Calm":
-                    sort(currentPlaylist, 1);
-                    break;
-
-                case "Neutral":
-                    sort(currentPlaylist, 2);
-                    break;
-
-                case "Energetic":
-                    sort(currentPlaylist, 3);                    
-                    break;
-
-                default:
-                    break;
-            }
+   
+    public void sortByMood(DoublyLinkedList currentPlayList,String mood){
+        switch(mood){
+            case "Calm":
+                sort(currentPlayList, true);
+                break;
+            case "Neutral":
+                sortNeutral(currentPlayList);
+                break;
+                
+            case "Energetic":
+                sort(currentPlayList, false);
+                break;
+            default:
+                return;
         }
     }
-    
-    private void sort(DoublyLinkedList playList,int moodValue){
         
-        Node calmHead = null , calmTail = null;
-        Node neutralHead = null , neutralTail = null;
-        Node energeticHead = null, energeticTail = null; 
+    private void sort(DoublyLinkedList playList,boolean ascending){
         
-        Node currentNode = playList.head;
+        if(playList.head == null){return;} // empty playlist
+        boolean swaped ;
         
-        while(currentNode != null){
+        do{
+            swaped = false;
+            Node currentNode = playList.head;
             
-            Node nextNode = currentNode.nextNode;
-            //breake the link
-            currentNode.nextNode = null;
-            currentNode.previousNode = null;
-            
-            // go through each mood
-            switch(currentNode.getMoodScore()){
+            //loop-throught all the nodes in the linkedList
+            while(currentNode.nextNode != null){
+             
+                //compare currentNodes mood socre with next Nodes moodScore
+                if(ascending && currentNode.getMoodScore() > currentNode.nextNode.getMoodScore()){
+                    swapData(currentNode,currentNode.nextNode);
+                    swaped = true;
+                }
                 
-                case 1: //calm
-                    if(calmHead == null){
-                        calmHead = currentNode;
-                        calmTail = currentNode;
-                    }
-                    else{ // add to the end Node & swap the links
-                        calmTail.nextNode = currentNode;        
-                        currentNode.previousNode = calmTail;
-                        calmTail = currentNode;
-                    }
-                    break;
+                else if(!ascending && currentNode.getMoodScore()< currentNode.nextNode.getMoodScore()){
+                    swapData(currentNode.nextNode, currentNode);
+                    swaped = true;
+                }
+                
+                //increment
+                currentNode = currentNode.nextNode;
             }
-            
-            
-            
-            currentNode = currentNode.nextNode;
-        }
+        }while(swaped);
+    }
+    
+    //swap firstNode data with secondNode data
+    private void swapData(Node firstNode, Node secondNode){
+  
+        //store firstNode values temprorly
+        String tempSongName = firstNode.songName;
+        String tempSongPath = firstNode.songPath;
+        String tempArtistName = firstNode.artistName;
+        int tempMoodScore = firstNode.getMoodScore();
         
         
+        //apply second node values to firstNode
+        firstNode.songName = secondNode.songName;
+        firstNode.songPath = secondNode.songPath;
+        firstNode.artistName = secondNode.artistName;
+        firstNode.setMoodScore(secondNode.getMoodScore());
+
+        
+        //apply first node values to secondNode
+        secondNode.songName = tempSongName;
+        secondNode.songPath = tempSongPath;
+        secondNode.artistName = tempArtistName;
+        secondNode.setMoodScore(tempMoodScore);
+    }
+    
+    private void sortNeutral(DoublyLinkedList playList){
+        if(playList.head == null){return;} // empty playlist
+        boolean swaped ;
+        
+        do{
+            swaped = false;
+            Node currentNode = playList.head;
+            
+            //loop-throught all the nodes in the linkedList
+            while(currentNode.nextNode != null){
+             
+                //Math.abs use to get the absolute value
+                //compare distens between currentNodes mood socre to 5 and nextNode mood score to 5 swap if there is less distance
+                if(Math.abs(currentNode.getMoodScore()-5) > Math.abs(currentNode.nextNode.getMoodScore() -5)){
+                    swapData(currentNode, currentNode.nextNode);
+                    swaped = true;
+                }
+                //increment
+                currentNode = currentNode.nextNode;
+            }
+        }while(swaped);
     }
 }
