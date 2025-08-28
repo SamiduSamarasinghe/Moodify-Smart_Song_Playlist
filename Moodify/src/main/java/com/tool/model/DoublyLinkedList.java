@@ -1,9 +1,12 @@
 package com.tool.model;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DoublyLinkedList {
+public class DoublyLinkedList implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
+    
         public Node head;
         public Node tail;
 

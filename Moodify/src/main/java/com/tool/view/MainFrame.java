@@ -11,6 +11,12 @@ import com.tool.model.Node;
 
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlayListSorter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 
 
@@ -38,9 +44,21 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         playlist = new DoublyLinkedList();
         playListSorter = new PlayListSorter();
+        loadPlaylistFromFile();
+        playListSorter = new PlayListSorter();
+    initializeUI();
+    updatePlayListDisplay();
+    
+    // Add window listener to save on exit
+    addWindowListener(new java.awt.event.WindowAdapter() {
+        @Override
+        public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+            savePlaylistToFile();
+        }
+    });
 
-        initializeUI();
-        updatePlayListDisplay();
+//        initializeUI();
+//        updatePlayListDisplay();
         
     }
     private void initializeUI() {
@@ -155,22 +173,29 @@ public class MainFrame extends JFrame {
         return;
     }
     playlist.insertSong(title, artist, durationInSeconds, url, moodScore);
-
-    // 4. Clear input fields
+    
+    // SAVE THE PLAYLIST IMMEDIATELY AFTER ADDING THE SONG
+    savePlaylistToFile();
+    
+    // Clear input fields
     titleTextField.setText("");
     artistTextField.setText("");
     durationTextField.setText("");
     urlTextField.setText("");
     moodDropdown.setSelectedIndex(0);
 
-    // 5. Refresh playlist display
+    // Refresh playlist display
     updatePlayListDisplay();
 
-    JOptionPane.showMessageDialog(this, "Song added successfully!");
+    JOptionPane.showMessageDialog(this, "Song added successfully and playlist saved!");
+    
+    
     });
     panel.add(addButton, gbc);
 
     return panel;
+    
+    
     }
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -385,6 +410,70 @@ public class MainFrame extends JFrame {
         // Use this to start your application
         SwingUtilities.invokeLater(() -> new MainFrame());
     }
+    
+        // Save playlist to file automatically on exit
+    private void savePlaylistToFile() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("playlist.dat"))) {
+            oos.writeObject(playlist);
+            System.out.println("Playlist automatically saved to playlist.dat");
+        } catch (IOException ex) {
+            System.out.println("Error saving playlist: " + ex.getMessage());
+        }
+    }
+
+    // Load playlist from file automatically on startup
+    private void loadPlaylistFromFile() {
+        File file = new File("playlist.dat");
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                playlist = (DoublyLinkedList) ois.readObject();
+                System.out.println("Playlist loaded from file successfully!");
+            } catch (IOException | ClassNotFoundException ex) {
+                System.out.println("Error loading playlist: " + ex.getMessage());
+                playlist = new DoublyLinkedList(); // Create new if load fails
+            }
+        } else {
+            playlist = new DoublyLinkedList(); // Create new if no file exists
+        }
+    }
+
+    // Manual save with file chooser
+    private void savePlaylist() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Playlist");
+        
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+                oos.writeObject(playlist);
+                JOptionPane.showMessageDialog(this, "Playlist saved successfully!");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error saving playlist: " + ex.getMessage(), 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    // Manual load with file chooser
+    private void loadPlaylist() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Load Playlist");
+        
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                playlist = (DoublyLinkedList) ois.readObject();
+                updatePlayListDisplay();
+                JOptionPane.showMessageDialog(this, "Playlist loaded successfully!");
+            } catch (IOException | ClassNotFoundException ex) {
+                JOptionPane.showMessageDialog(this, "Error loading playlist: " + ex.getMessage(), 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    
+    
 }
 
 /*
