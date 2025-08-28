@@ -37,13 +37,22 @@ public class MoodShuffler {
         Node currentNode = playlist.head;
         while (currentNode != null) {
             int score = currentNode.getMoodScore();
-            if(score <= 3) {
-                calmSongs.add(currentNode);
-            } else if(score <= 7) {
-                neutralSongs.add(currentNode);
-            } else {
-                energeticSongs.add(currentNode);
+            
+            switch(score) {
+                case 1:
+                    calmSongs.add(currentNode);
+                    break;
+                case 2:
+                    neutralSongs.add(currentNode);
+                    break;
+                case 3:
+                    energeticSongs.add(currentNode);
+                    break;
+                default:
+                    // Handle unexpected score, maybe add to neutral?
+                    neutralSongs.add(currentNode);
             }
+            
             currentNode = currentNode.nextNode;
         }
 
