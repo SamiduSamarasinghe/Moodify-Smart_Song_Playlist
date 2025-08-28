@@ -181,8 +181,7 @@ public class MainFrame extends JFrame {
                     break;
                 default:
                     //for sort by mood and others, add placeholder
-                    button.addActionListener(e -> 
-                    JOptionPane.showMessageDialog(this, label + "button clicked! lakshan ub hadaganim meka"));
+                    button.addActionListener(e -> perfromMoodSort());
             }
             
             if(label.equals("Sort by Mood")){
