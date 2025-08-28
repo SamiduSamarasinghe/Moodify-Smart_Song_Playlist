@@ -25,6 +25,9 @@ public class MainFrame extends JFrame {
     private JTextField durationTextField;
     private JSlider moodSlider;
     private JTextField searchField;
+    
+    private JTextField urlTextField;
+    private JComboBox<String> moodDropdown;
 
 
     public MainFrame() {
@@ -56,72 +59,61 @@ public class MainFrame extends JFrame {
         setVisible(true);
     }
     private JPanel createInputPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Add New Song"));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5); // Padding
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(BorderFactory.createTitledBorder("Add New Song"));
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(5, 5, 5, 5); // Padding
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.weightx = 1.0;
 
-        // Title Label & Field
-        gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(new JLabel("Song Title:"), gbc);
-        gbc.gridx = 1;
-        titleTextField = new JTextField(15);
-        titleTextField.setToolTipText("Enter song title");
-        panel.add(titleTextField, gbc);
+    // Row 0: Song Title
+    gbc.gridx = 0; gbc.gridy = 0;
+    panel.add(new JLabel("Song Title:"), gbc);
+    gbc.gridx = 1;
+    titleTextField = new JTextField(20);
+    panel.add(titleTextField, gbc);
 
-        // Artist Label & Field
-        gbc.gridx = 0; gbc.gridy = 1;
-        panel.add(new JLabel("Artist:"), gbc);
-        gbc.gridx = 1;
-        artistTextField = new JTextField(15);
-        artistTextField.setToolTipText("Enter artist name");
-        panel.add(artistTextField, gbc);
+    // Row 1: Artist
+    gbc.gridx = 0; gbc.gridy = 1;
+    panel.add(new JLabel("Artist:"), gbc);
+    gbc.gridx = 1;
+    artistTextField = new JTextField(20);
+    panel.add(artistTextField, gbc);
 
-        // Duration Label & Field
-        gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(new JLabel("Duration (MM:SS):"), gbc);
-        gbc.gridx = 1;
-        durationTextField = new JTextField(15);
-        durationTextField.setToolTipText("e.g., 3:45");
-        panel.add(durationTextField, gbc);
+    // Row 2: Duration
+    gbc.gridx = 0; gbc.gridy = 2;
+    panel.add(new JLabel("Duration (MM:SS):"), gbc);
+    gbc.gridx = 1;
+    durationTextField = new JTextField(10);
+    durationTextField.setToolTipText("e.g., 3:45");
+    panel.add(durationTextField, gbc);
 
-        // Mood Score Label & Slider
-        gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(new JLabel("Mood Score:"), gbc);
-        gbc.gridx = 1;
-        JPanel moodPanel = new JPanel(new BorderLayout());
-        moodSlider = new JSlider(1, 10, 5);
-        moodSlider.setMajorTickSpacing(1);
-        moodSlider.setPaintTicks(true);
-        moodSlider.setPaintLabels(true);
-        moodPanel.add(moodSlider, BorderLayout.CENTER);
-        JLabel moodValueLabel = new JLabel("5 - Neutral/Balanced");
-        moodValueLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        moodPanel.add(moodValueLabel, BorderLayout.SOUTH);
-        // Add listener to update the label when slider moves
-        moodSlider.addChangeListener(e -> {
-            int score = moodSlider.getValue();
-            String moodText = switch(score) {
-                case 1, 2 -> "Very Calm";
-                case 3, 4 -> "Calm";
-                case 5, 6 -> "Neutral/Balanced";
-                case 7, 8 -> "Energetic";
-                case 9, 10 -> "Very Energetic";
-                default -> "Unknown";
-            };
-            moodValueLabel.setText(score + " - " + moodText);
-        });
-        panel.add(moodPanel, gbc);
+    // Row 3: YouTube URL (NEW FIELD)
+    gbc.gridx = 0; gbc.gridy = 3;
+    panel.add(new JLabel("YouTube URL:"), gbc);
+    gbc.gridx = 1;
+    JTextField urlTextField = new JTextField(20); // Create this as a class field if needed elsewhere
+    panel.add(urlTextField, gbc);
 
-        // Add Song Button
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        JButton addButton = new JButton("Add Song");
-        panel.add(addButton, gbc);
+    // Row 4: Mood Selection (NEW DROPDOWN INSTEAD OF SLIDER)
+    gbc.gridx = 0; gbc.gridy = 4;
+    panel.add(new JLabel("Mood:"), gbc);
+    gbc.gridx = 1;
+    
+    // Create the dropdown with mood options
+    String[] moods = {"Select Mood", "Calm", "Neutral", "Energetic"};
+    JComboBox<String> moodDropdown = new JComboBox<>(moods);
+    moodDropdown.setSelectedIndex(0); // Start with "Select Mood"
+    panel.add(moodDropdown, gbc);
 
-        return panel;
+    // Row 5: Add Song Button
+    gbc.gridx = 0; gbc.gridy = 5;
+    gbc.gridwidth = 2; // Make button span both columns
+    gbc.anchor = GridBagConstraints.CENTER;
+    JButton addButton = new JButton("Add Song");
+    panel.add(addButton, gbc);
+
+    return panel;
     }
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
