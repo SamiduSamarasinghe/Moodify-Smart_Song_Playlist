@@ -197,7 +197,7 @@ public class MainFrame extends JFrame {
         JPanel panel = new JPanel(new FlowLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Playlist Controls"));
 
-        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort by Mood", "Mood Shuffle", "Clear All"};
+        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Clear All"};
         for (String label : buttonLabels) {
             JButton button = new JButton(label);
             
@@ -221,12 +221,11 @@ public class MainFrame extends JFrame {
                 case "Clear All":
                     button.addActionListener(e -> clearPlaylist());
                     break;
-                case "Sort by Mood":
+                case "Sort":
                     button.addActionListener(e-> perfromMoodSort());
                     break;
                 default:
-                    //for sort by mood and others, add placeholder
-                    button.addActionListener(e -> perfromMoodSort());
+                    break;
             }            
             panel.add(button);
         }
@@ -234,14 +233,39 @@ public class MainFrame extends JFrame {
     }
     
     private void perfromMoodSort(){
-        String[] moodList = {"Calm","Neutral","Energetic"};
+        String[] sortOptions = {"Sort By Mood","Sort By Duration"};
         
-        //show list to select a mood and get the selected mood as a string
-        String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a mood to sort by",
-                "Mood Sort",JOptionPane.QUESTION_MESSAGE,null,moodList,moodList[0]);
-       
-        playListSorter.sortByMood(playlist,selectedMood);
+        int result = JOptionPane.showOptionDialog(
+                null,"Select Sorting Method","Sort Options",
+                JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE,null,sortOptions,sortOptions[0]);
         
+        //sort by Mood
+        if(result == 0){
+            String[] moodList = {"Calm","Neutral","Energetic"};
+        
+            //show list to select a mood and get the selected mood as a string
+            String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a mood to sort by",
+                    "Mood Sort",JOptionPane.QUESTION_MESSAGE,null,moodList,moodList[0]);
+
+            playListSorter.sortByMood(playlist,selectedMood);
+            updatePlayListDisplay();
+        }
+        //sort by Duration
+        else{
+            String[] timeOptions = {"Accending Order","Deccending Order"};
+            
+            String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a Option to sort by",
+            "Time Sort",JOptionPane.QUESTION_MESSAGE,null,timeOptions,timeOptions[0]);
+            
+            if(selectedMood == "Accending Order"){
+                playListSorter.sortByTime(playlist, true);
+            }
+            else{
+                playListSorter.sortByTime(playlist, false);
+            }
+            updatePlayListDisplay();
+        }
+
         /* For Debuging
 
         // 3. Print original playlist
@@ -269,7 +293,7 @@ public class MainFrame extends JFrame {
         // This is where you call your MoodShuffler code
         if (playlist != null && playlist.head != null) {
             // For now, using defaults. You can add a dialog to choose mood/intensity later.
-            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, MoodShuffler.INTENSITY_MEDIUM);
+            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, MoodShuffler.INTENSITY_LIGHT);
             updatePlayListDisplay(); // Refresh the JList
             JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
         } else {
@@ -283,7 +307,8 @@ public class MainFrame extends JFrame {
             Node current = playlist.head;
             while (current != null) {
                 String songInfo = current.songName + " - " + current.artistName + 
-                        " [ " + current.getMoodScore() + " ] ";
+                        " [ " + current.getMoodScore() + " ] "+ " - "
+                        + playListSorter.formatDuration(current.getDuration());
                 
                 //add play icon to show current playing song
                 if (current == currentNode && isPlaying){
