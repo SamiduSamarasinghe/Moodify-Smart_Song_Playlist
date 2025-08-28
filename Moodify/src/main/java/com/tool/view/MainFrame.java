@@ -28,6 +28,9 @@ public class MainFrame extends JFrame {
     
     private JTextField urlTextField;
     private JComboBox<String> moodDropdown;
+    
+    private Node currentNode; //to track the currently playing song
+    private boolean isPlaying = false; //to track play, pause 
 
 
     public MainFrame() {
@@ -157,13 +160,34 @@ public class MainFrame extends JFrame {
         String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort by Mood", "Mood Shuffle", "Clear All"};
         for (String label : buttonLabels) {
             JButton button = new JButton(label);
-            // Add your action listeners here later
-            if (label.equals("Mood Shuffle")) {
-                button.addActionListener(e -> performMoodShuffle());
+            
+            // Add your action listeners for buttons
+            switch (label) {
+                case "Play":
+                    button.addActionListener(e -> playSong());
+                    break;
+                case "Pause":
+                    button.addActionListener(e -> pauseSong());
+                    break;
+                case "Next": 
+                    button.addActionListener(e -> pauseSong());
+                    break;
+                case "Previous":
+                    button.addActionListener(e -> previousSong());
+                    break;
+                case "Mood Shuffle":
+                    button.addActionListener(e -> performMoodShuffle());
+                    break;
+                /*case "Clear All":
+                    button.addActionListener(e -> clearPlaylist());
+                    break;*/
+                default:
+                    //for sort by mood and others, add placeholder
+                    button.addActionListener(e -> 
+                    JOptionPane.showMessageDialog(this, label + "button clicked! lakshan ub hadapm meka"));
             }
             panel.add(button);
         }
-
         return panel;
     }
     // YOUR METHOD TO HANDLE THE SHUFFLE
@@ -189,6 +213,56 @@ public class MainFrame extends JFrame {
             }
         }
     }
+    //add navigation methods(play/pause/next/previous)
+    //play button
+    private void playSong(){
+        if (playlist == null || playlist.head == null){
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        //if no song is selected, start from begining
+        if(currentNode == null){
+            currentNode = playlist.head;
+        }
+        isPlaying = true;
+        
+        //highlight the current song anddisplay message
+        JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
+        + " - " + currentNode.artistName);
+        updatePlayListDisplay(); //refresh to show current song        
+    }
+    
+    //pause button
+    private void pauseSong(){
+        isPlaying = false;
+        JOptionPane.showMessageDialog(this, "Playback Paused");
+    }
+    
+    //next button
+    private void nextSong(){
+        if (currentNode != null && currentNode.nextNode != null){
+            currentNode = currentNode.nextNode;
+            JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
+            updatePlayListDisplay();
+        }else {
+            JOptionPane.showMessageDialog(this, "No Next Song Available!", "Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    
+    //previous button
+    private void previousSong(){
+        if (currentNode != null && currentNode.previousNode != null){
+            currentNode = currentNode.previousNode;
+            JOptionPane.showMessageDialog(this, "Previous: " + currentNode.songName);
+            updatePlayListDisplay();
+        }else{
+            JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    
+    
+    
+    
     public static void main(String[] args) {
         // Use this to start your application
         SwingUtilities.invokeLater(() -> new MainFrame());
