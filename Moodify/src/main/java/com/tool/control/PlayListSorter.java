@@ -5,32 +5,32 @@ import com.tool.model.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlayListSorter {
+public class PlaylistSorter {
    
-    public void sortByMood(DoublyLinkedList currentPlayList,String mood){
+    public void sortByMood(DoublyLinkedList currentPlaylist,String mood){
         switch(mood){
             case "Calm":
-                sort(currentPlayList, true);
+                sort(currentPlaylist, true);
                 break;
             case "Neutral":
-                sortNeutral(currentPlayList);
+                sortNeutral(currentPlaylist);
                 break;
                 
             case "Energetic":
-                sort(currentPlayList, false);
+                sort(currentPlaylist, false);
                 break;
             default:
                 return;
         }
     }
     
-    public void sortByTime(DoublyLinkedList currentPlayList,boolean byAscedingOrder){
-        if(currentPlayList.head == null){return;} // empty playlist
+    public void sortByTime(DoublyLinkedList currentPlaylist,boolean byAscedingOrder){
+        if(currentPlaylist.head == null){return;} // empty playlist
         boolean swaped ;
         
         do{
             swaped = false;
-            Node currentNode = currentPlayList.head;
+            Node currentNode = currentPlaylist.head;
             
             //loop-throught all the nodes in the linkedList
             while(currentNode.nextNode != null){
@@ -52,14 +52,14 @@ public class PlayListSorter {
         }while(swaped);        
     }
         
-    private void sort(DoublyLinkedList playList,boolean ascending){
+    private void sort(DoublyLinkedList playlist,boolean ascending){
         
-        if(playList.head == null){return;} // empty playlist
+        if(playlist.head == null){return;} // empty playlist
         boolean swaped ;
         
         do{
             swaped = false;
-            Node currentNode = playList.head;
+            Node currentNode = playlist.head;
             
             //loop-throught all the nodes in the linkedList
             while(currentNode.nextNode != null){
