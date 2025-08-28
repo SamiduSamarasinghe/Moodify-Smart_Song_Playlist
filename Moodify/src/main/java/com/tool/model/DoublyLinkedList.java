@@ -7,58 +7,61 @@ public class DoublyLinkedList {
         public Node head;
         public Node tail;
 
-        public final void insertBeginning(String songName,String artistName, String songPath){
-                Node newNode = new Node(songName,artistName,songPath);
-                if(head == null){
-                        head = newNode;
-                        tail = newNode;
-                }
-                else{
-                        head.previousNode = newNode;
-                        newNode.nextNode = head;
-                        head = newNode;
-                }
+        public final void insertBeginning(String songName, String artistName, String songPath, int duration){
+        Node newNode = new Node(songName, artistName, songPath, duration);
+        if(head == null){
+            head = newNode;
+            tail = newNode;
         }
+        else{
+            head.previousNode = newNode;
+            newNode.nextNode = head;
+            head = newNode;
+        }
+    }
         //new overloaded method(Sa)
-        public final void insertBeginning(String songName, String artistName, String songPath, int moodScore){
-                Node newNode = new Node(songName,artistName,songPath, moodScore); //new constructor
-                if (head == null){
-                        head = newNode;
-                        tail = newNode;
-                }
-                else{
-                        head.previousNode = newNode;
-                        newNode.nextNode = head;
-                        head = newNode;
-                }
+       public final void insertBeginning(String songName, String artistName, String songPath, int duration, int moodScore){
+        Node newNode = new Node(songName, artistName, songPath, duration, moodScore);
+        if (head == null){
+            head = newNode;
+            tail = newNode;
         }
+        else{
+            head.previousNode = newNode;
+            newNode.nextNode = head;
+            head = newNode;
+        }
+    }
 
-        public final void insertEnd(String songName,String artistName, String songPath){
-                Node newNode = new Node(songName,artistName,songPath);
-                //if tail is null make the current head as the tail
-                if(tail == null ){
-                       head = newNode;
-                       tail = newNode;
-                }
-                else{
-                        tail.nextNode = newNode;
-                        newNode.previousNode = tail;
-                        tail = newNode;
-                }
+
+        public final void insertEnd(String songName, String artistName, String songPath, int duration){
+        Node newNode = new Node(songName, artistName, songPath, duration);
+        if(tail == null ){
+            head = newNode;
+            tail = newNode;
         }
+        else{
+            tail.nextNode = newNode;
+            newNode.previousNode = tail;
+            tail = newNode;
+        }
+    }
         //new overloaded method(Sa)
-        public final void insertEnd(String songName, String artistName, String songPath, int moodScore){
-                Node newNode = new Node(songName, artistName, songPath, moodScore); //use new constructor
-                if(tail == null){
-                        head = newNode;
-                        tail = newNode;
-                }
-                else{
-                        tail.nextNode = newNode;
-                        newNode.previousNode = tail;
-                        tail = newNode;
-                }
+        public final void insertEnd(String songName, String artistName, String songPath, int duration, int moodScore){
+        Node newNode = new Node(songName, artistName, songPath, duration, moodScore);
+        if(tail == null){
+            head = newNode;
+            tail = newNode;
         }
+        else{
+            tail.nextNode = newNode;
+            newNode.previousNode = tail;
+            tail = newNode;
+        }
+    }
+        public final void insertSong(String songName, String artistName, int duration, String songPath, int moodScore) {
+        insertEnd(songName, artistName, songPath, duration, moodScore);
+    }
 
         public final void deleteBegin(){
                 if(head == null){

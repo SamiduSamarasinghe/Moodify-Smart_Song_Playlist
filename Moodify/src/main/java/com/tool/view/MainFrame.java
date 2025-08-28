@@ -124,7 +124,49 @@ public class MainFrame extends JFrame {
     //add actionListner
     addButton.addActionListener(e -> {
         //placeholder
-        JOptionPane.showMessageDialog(this, "Add Song Button Clicked");
+        String title = titleTextField.getText().trim();
+        String artist = artistTextField.getText().trim();
+        String durationStr = durationTextField.getText().trim();
+        String url = urlTextField.getText().trim();
+        int moodScore = moodDropdown.getSelectedIndex();
+        
+        if (title.isEmpty() || artist.isEmpty() || durationStr.isEmpty() || url.isEmpty() || moodScore == 0) {
+        JOptionPane.showMessageDialog(this, 
+                "Please fill all fields and select a mood!", 
+                "Input Error", JOptionPane.ERROR_MESSAGE);
+        return;
+        
+        
+    }
+        int durationInSeconds = 0;
+    try {
+        String[] parts = durationStr.split(":");
+        if (parts.length == 2) {
+            int minutes = Integer.parseInt(parts[0]);
+            int seconds = Integer.parseInt(parts[1]);
+            durationInSeconds = minutes * 60 + seconds;
+        } else {
+            throw new NumberFormatException("Invalid format");
+        }
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(this, 
+                "Invalid duration format. Please use MM:SS (e.g., 3:45).", 
+                "Input Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    playlist.insertSong(title, artist, durationInSeconds, url, moodScore);
+
+    // 4. Clear input fields
+    titleTextField.setText("");
+    artistTextField.setText("");
+    durationTextField.setText("");
+    urlTextField.setText("");
+    moodDropdown.setSelectedIndex(0);
+
+    // 5. Refresh playlist display
+    updatePlayListDisplay();
+
+    JOptionPane.showMessageDialog(this, "Song added successfully!");
     });
     panel.add(addButton, gbc);
 
