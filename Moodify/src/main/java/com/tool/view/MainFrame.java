@@ -10,6 +10,7 @@ import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 
 import com.tool.control.MoodShuffler;
+import com.tool.control.PlayListSorter;
 
 
 
@@ -18,6 +19,7 @@ public class MainFrame extends JFrame {
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
+    private PlayListSorter playListSorter;
     
     //input feilds
     private JTextField titleTextField;
@@ -35,12 +37,8 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         playlist = new DoublyLinkedList();
-        
-        //add temporary songs to test
-         playlist.insertEnd("Test Song 1", "Artist A", "path1", 1); // Calm
-         playlist.insertEnd("Test Song 2", "Artist B", "path2", 3); // Energetic
-         playlist.insertEnd("Test Song 3", "Artist C", "path3", 2); // Neutral
-    
+        playListSorter = new PlayListSorter();
+
         initializeUI();
         updatePlayListDisplay();
         
@@ -183,13 +181,49 @@ public class MainFrame extends JFrame {
                     break;
                 default:
                     //for sort by mood and others, add placeholder
-                    button.addActionListener(e -> 
-                    JOptionPane.showMessageDialog(this, label + "button clicked! lakshan ub hadaganim meka"));
+                    button.addActionListener(e -> perfromMoodSort());
             }
+            
+            if(label.equals("Sort by Mood")){
+                button.addActionListener(e -> perfromMoodSort());
+            }
+            
             panel.add(button);
         }
         return panel;
     }
+    
+    private void perfromMoodSort(){
+        String[] moodList = {"Calm","Neutral","Energetic"};
+        
+        //show list to select a mood and get the selected mood as a string
+        String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a mood to sort by",
+                "Mood Sort",JOptionPane.QUESTION_MESSAGE,null,moodList,moodList[0]);
+       
+        playListSorter.sortByMood(playlist,selectedMood);
+        
+        /* For Debuging
+
+        // 3. Print original playlist
+        System.out.println("Original Playlist:");
+        Node current = playlist.head;
+        while (current != null) {
+            System.out.println(current.songName + " [" + current.getMoodScore() + "]");
+            current = current.nextNode;
+        }
+        
+
+        playListSorter.sortByMood(playlist,selectedMood);
+
+        System.out.println("Sorted Playlist:");
+        current = playlist.head;
+        while (current != null) {
+            System.out.println(current.songName + " [" + current.getMoodScore() + "]");
+            current = current.nextNode;
+        }
+        */
+    }
+    
     // YOUR METHOD TO HANDLE THE SHUFFLE
     private void performMoodShuffle() {
         // This is where you call your MoodShuffler code
