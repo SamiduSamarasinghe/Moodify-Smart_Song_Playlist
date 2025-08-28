@@ -387,8 +387,19 @@ public class MainFrame extends JFrame {
             currentNode = currentNode.nextNode;
             JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
             updatePlayListDisplay();
+            
+            //auto-play logic
+            if (autoPlayEnabled) {
+                isPlaying = true;
+                playSong(); //play immediately without dialog
+            } else {
+                JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
+            }
+            
         }else {
-            JOptionPane.showMessageDialog(this, "No Next Song Available!", "Error", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            isPlaying = false;
+            updatePlayListDisplay();
         }
     }
     
@@ -398,6 +409,13 @@ public class MainFrame extends JFrame {
             currentNode = currentNode.previousNode;
             JOptionPane.showMessageDialog(this, "Previous: " + currentNode.songName);
             updatePlayListDisplay();
+            
+            if (autoPlayEnabled) {
+                isPlaying = true;
+                playSong();
+            } else {
+                JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
+            }
         }else{
             JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
         }
