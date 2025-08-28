@@ -179,15 +179,13 @@ public class MainFrame extends JFrame {
                 case "Clear All":
                     button.addActionListener(e -> clearPlaylist());
                     break;
+                case "Sort by Mood":
+                    button.addActionListener(e-> perfromMoodSort());
+                    break;
                 default:
                     //for sort by mood and others, add placeholder
                     button.addActionListener(e -> perfromMoodSort());
-            }
-            
-            if(label.equals("Sort by Mood")){
-                button.addActionListener(e -> perfromMoodSort());
-            }
-            
+            }            
             panel.add(button);
         }
         return panel;
