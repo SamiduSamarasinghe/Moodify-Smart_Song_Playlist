@@ -170,7 +170,7 @@ public class MainFrame extends JFrame {
                     button.addActionListener(e -> pauseSong());
                     break;
                 case "Next": 
-                    button.addActionListener(e -> pauseSong());
+                    button.addActionListener(e -> nextSong());
                     break;
                 case "Previous":
                     button.addActionListener(e -> previousSong());
@@ -178,13 +178,13 @@ public class MainFrame extends JFrame {
                 case "Mood Shuffle":
                     button.addActionListener(e -> performMoodShuffle());
                     break;
-                /*case "Clear All":
+                case "Clear All":
                     button.addActionListener(e -> clearPlaylist());
-                    break;*/
+                    break;
                 default:
                     //for sort by mood and others, add placeholder
                     button.addActionListener(e -> 
-                    JOptionPane.showMessageDialog(this, label + "button clicked! lakshan ub hadapm meka"));
+                    JOptionPane.showMessageDialog(this, label + "button clicked! lakshan ub hadaganim meka"));
             }
             panel.add(button);
         }
@@ -208,8 +208,16 @@ public class MainFrame extends JFrame {
         if (playlist != null && playlist.head != null) {
             Node current = playlist.head;
             while (current != null) {
-                listModel.addElement(current.songName + " - " + current.artistName + " [" + current.getMoodScore() + "]");
+                String songInfo = current.songName + " - " + current.artistName + 
+                        " [ " + current.getMoodScore() + " ] ";
+                
+                //add play icon to show current playing song
+                if (current == currentNode && isPlaying){
+                    songInfo = "▶ " + songInfo;
+                }
+                listModel.addElement(songInfo);
                 current = current.nextNode;
+                
             }
         }
     }
@@ -257,6 +265,17 @@ public class MainFrame extends JFrame {
             updatePlayListDisplay();
         }else{
             JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    
+    //clear all button
+    private void clearPlaylist(){
+        if (playlist != null){
+            playlist.clear();
+            currentNode = null;
+            isPlaying = false;
+            updatePlayListDisplay();
+            JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
     
