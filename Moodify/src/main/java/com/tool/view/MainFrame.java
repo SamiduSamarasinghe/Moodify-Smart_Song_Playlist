@@ -32,7 +32,15 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         playlist = new DoublyLinkedList();
+        
+        //add temporary songs to test
+         playlist.insertEnd("Test Song 1", "Artist A", "path1", 1); // Calm
+         playlist.insertEnd("Test Song 2", "Artist B", "path2", 3); // Energetic
+         playlist.insertEnd("Test Song 3", "Artist C", "path3", 2); // Neutral
+    
         initializeUI();
+        updatePlayListDisplay();
+        
     }
     private void initializeUI() {
         // 1. Basic JFrame setup
