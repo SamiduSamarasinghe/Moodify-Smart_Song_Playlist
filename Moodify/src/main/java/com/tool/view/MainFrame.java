@@ -92,7 +92,7 @@ public class MainFrame extends JFrame {
     gbc.gridx = 0; gbc.gridy = 3;
     panel.add(new JLabel("YouTube URL:"), gbc);
     gbc.gridx = 1;
-    JTextField urlTextField = new JTextField(20); // Create this as a class field if needed elsewhere
+    urlTextField = new JTextField(20); // Create this as a class field if needed elsewhere
     panel.add(urlTextField, gbc);
 
     // Row 4: Mood Selection (NEW DROPDOWN INSTEAD OF SLIDER)
@@ -102,7 +102,7 @@ public class MainFrame extends JFrame {
     
     // Create the dropdown with mood options
     String[] moods = {"Select Mood", "Calm", "Neutral", "Energetic"};
-    JComboBox<String> moodDropdown = new JComboBox<>(moods);
+    moodDropdown = new JComboBox<>(moods);
     moodDropdown.setSelectedIndex(0); // Start with "Select Mood"
     panel.add(moodDropdown, gbc);
 
@@ -111,6 +111,12 @@ public class MainFrame extends JFrame {
     gbc.gridwidth = 2; // Make button span both columns
     gbc.anchor = GridBagConstraints.CENTER;
     JButton addButton = new JButton("Add Song");
+    
+    //add actionListner
+    addButton.addActionListener(e -> {
+        //placeholder
+        JOptionPane.showMessageDialog(this, "Add Song Button Clicked");
+    });
     panel.add(addButton, gbc);
 
     return panel;
