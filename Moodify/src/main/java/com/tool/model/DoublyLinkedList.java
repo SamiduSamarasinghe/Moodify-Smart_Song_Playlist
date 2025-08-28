@@ -11,7 +11,7 @@ public class DoublyLinkedList implements Serializable {
         public Node tail;
 
         public final void insertBeginning(String songName, String artistName, String songPath, int duration){
-        Node newNode = new Node(songName, artistName, songPath, duration);
+        Node newNode = new Node(songName, artistName, songPath, duration, 2); //did fix here
         if(head == null){
             head = newNode;
             tail = newNode;
@@ -38,7 +38,7 @@ public class DoublyLinkedList implements Serializable {
 
 
         public final void insertEnd(String songName, String artistName, String songPath, int duration){
-        Node newNode = new Node(songName, artistName, songPath, duration);
+        Node newNode = new Node(songName, artistName, songPath, duration, 2);
         if(tail == null ){
             head = newNode;
             tail = newNode;

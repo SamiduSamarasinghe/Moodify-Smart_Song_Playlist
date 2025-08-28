@@ -11,7 +11,7 @@ import com.tool.model.Node;
 
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
-import com.tool.control.PlaylistSorter;
+import com.tool.control.PlayListSorter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,7 +26,7 @@ public class MainFrame extends JFrame {
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
-    private PlaylistSorter playlistSorter;
+    private PlayListSorter playlistSorter;
     
     //input feilds
     private JTextField titleTextField;
@@ -44,7 +44,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
-        playlistSorter = new PlaylistSorter();
+        playlistSorter = new PlayListSorter();
         initializeUI();
         updatePlayListDisplay();
     
@@ -297,8 +297,10 @@ public class MainFrame extends JFrame {
     private void performMoodShuffle() {
         // This is where you call your MoodShuffler code
         if (playlist != null && playlist.head != null) {
-            // For now, using defaults. You can add a dialog to choose mood/intensity later.
-            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, MoodShuffler.INTENSITY_LIGHT);
+            
+            int intensity = chooseShuffleIntensity();
+            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, intensity);
+
             updatePlayListDisplay(); // Refresh the JList
             JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
         } else {
@@ -325,6 +327,27 @@ public class MainFrame extends JFrame {
             }
         }
     }
+    //shuffle intensity method
+    
+    private int chooseShuffleIntensity() {
+        String[] options = {"LIGHT", "MEDIUM", "HIGH"};
+    int choice = JOptionPane.showOptionDialog(this,
+        "Choose Shuffle Intensity:",
+        "Shuffle Intensity",
+        JOptionPane.DEFAULT_OPTION,
+        JOptionPane.QUESTION_MESSAGE,
+        null,
+        options,
+        options[1] // Default to MEDIUM
+    );
+    
+    // Convert choice to intensity constant
+    if (choice == 0) return MoodShuffler.INTENSITY_LIGHT;
+    if (choice == 1) return MoodShuffler.INTENSITY_MEDIUM;
+    if (choice == 2) return MoodShuffler.INTENSITY_HIGH;
+    return MoodShuffler.INTENSITY_MEDIUM; // Default if canceled
+    }
+    
     //add navigation methods(play/pause/next/previous)
     //play button
     private void playSong(){
