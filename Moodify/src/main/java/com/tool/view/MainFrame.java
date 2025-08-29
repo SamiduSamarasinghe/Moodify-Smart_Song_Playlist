@@ -4,23 +4,13 @@
  */
 package com.tool.view;
 
-import javax.swing.*;
-import java.awt.*;
-import com.tool.model.DoublyLinkedList;
-import com.tool.model.Node;
-
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
 import com.tool.control.PlaylistSorter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import com.tool.model.DoublyLinkedList;
+import com.tool.model.Node;
+import java.awt.*;
+import javax.swing.*;
 
 
 
@@ -82,7 +72,9 @@ public class MainFrame extends JFrame {
         // 3. Build the Center Panel (Playlist View)
         JPanel centerPanel = createCenterPanel();
         add(centerPanel, BorderLayout.CENTER);
-
+        addRightClickMenu();
+      
+        
         // 4. Build the South Panel (Controls)
         JPanel controlPanel = createControlPanel();
         add(controlPanel, BorderLayout.SOUTH);
@@ -223,6 +215,13 @@ public class MainFrame extends JFrame {
         searchPanel.add(favoritesButton);
         
         panel.add(searchPanel, BorderLayout.NORTH);
+        
+        // search 
+    searchButton.addActionListener(e -> searchSongs());
+    
+    searchPanel.add(searchButton);
+    panel.add(searchPanel, BorderLayout.NORTH);
+
 
 
         // The main playlist display
@@ -456,7 +455,149 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
+    // ========== REMOVE FUNCTIONALITY ==========
+private void addRightClickMenu() {
+    JPopupMenu popupMenu = new JPopupMenu();
+    JMenuItem removeItem = new JMenuItem("Remove Song");
     
+
+    removeItem.addActionListener(e -> removeSelectedSong());
+    popupMenu.add(removeItem);
+    
+    playListJList.setComponentPopupMenu(popupMenu);
+    
+    playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mousePressed(java.awt.event.MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                int index = playListJList.locationToIndex(e.getPoint());
+                if (index != -1) {
+                    playListJList.setSelectedIndex(index);
+                }
+            }
+        }
+    });
+}
+            // remove song 
+      private void removeSelectedSong() {
+    int selectedIndex = playListJList.getSelectedIndex();
+    if (selectedIndex == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a song to remove!", "Error", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    // Get song name from display
+    String selectedValue = playListJList.getSelectedValue();
+    String songName = selectedValue.split(" - ")[0].trim();
+    
+    // Show confirmation dialog
+    int confirm = JOptionPane.showConfirmDialog(this, 
+        "Are you sure you want to remove this song?\n\n" +
+        "Song: " + songName + "\n" +
+        "Note.Song will be removed from playlist",
+        "Confirm Remove Song",
+        JOptionPane.YES_NO_OPTION,
+        JOptionPane.WARNING_MESSAGE);
+    
+    if (confirm != JOptionPane.YES_OPTION) {
+        return; // User clicked No or Cancel
+    }
+    
+    // Remove the song from playlist
+    boolean removed = removeSongFromPlaylist(songName);
+    
+    if (removed) {
+        JOptionPane.showMessageDialog(this, "Song removed successfully: " + songName, "Success", JOptionPane.INFORMATION_MESSAGE);
+        updatePlayListDisplay();
+        PlaylistSaveHelper.savePlaylistToFile(playlist); // Save changes
+    } else {
+        JOptionPane.showMessageDialog(this, "Failed to remove song: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+private boolean removeSongFromPlaylist(String songName) {
+    if (playlist == null || playlist.head == null) return false;
+    
+    Node current = playlist.head;
+    while (current != null) {
+        if (current.songName.equalsIgnoreCase(songName)) {
+            // Remove the node
+            if (current == playlist.head) {
+                playlist.deleteBegin();
+            } else if (current == playlist.tail) {
+                playlist.deleteEnd();
+            } else {
+                current.previousNode.nextNode = current.nextNode;
+                current.nextNode.previousNode = current.previousNode;
+            }
+            return true;
+        }
+        current = current.nextNode;
+    }
+    return false;
+}
+           // SEARCH FUNCTIONALITY 
+        private void setupSearchFunctionality() {
+    // Find the search button and add action listener
+    
+    Component[] components = ((JPanel)playListJList.getParent().getParent().getComponent(0)).getComponents();
+    for (Component comp : components) {
+        if (comp instanceof JPanel) {
+            Component[] searchComponents = ((JPanel)comp).getComponents();
+            for (Component searchComp : searchComponents) {
+                if (searchComp instanceof JButton && ((JButton)searchComp).getText().equals("Go")) {
+                    ((JButton)searchComp).addActionListener(e -> searchSongs());
+                    break;
+                }
+            }
+        }
+    }
+}
+
+        private void searchSongs() {
+    String searchTerm = searchField.getText().trim();
+    
+    if (searchTerm.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please enter a search term!", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    // Search by both song name and artist
+    java.util.List<String> results = new java.util.ArrayList<>();
+    Node current = playlist.head;
+    
+    while (current != null) {
+        if (current.songName.toLowerCase().contains(searchTerm.toLowerCase()) ||
+            current.artistName.toLowerCase().contains(searchTerm.toLowerCase())) {
+            
+            String songInfo = current.songName + " - " + current.artistName + 
+                " [ " + current.getMoodScore() + " ] " + " - " +
+                playlistSorter.formatDuration(current.getDuration());
+            
+            results.add(songInfo);
+        }
+        current = current.nextNode;
+    }
+    
+    if (results.isEmpty()) {
+        JOptionPane.showMessageDialog(this, 
+            "No songs found with: '" + searchTerm + "'", 
+            "Search Results", 
+            JOptionPane.INFORMATION_MESSAGE);
+    } else {
+        StringBuilder message = new StringBuilder("Found " + results.size() + " song(s):\n\n");
+        for (int i = 0; i < results.size(); i++) {
+            message.append(i + 1).append(". ").append(results.get(i)).append("\n");
+        }
+        
+        JOptionPane.showMessageDialog(this, 
+            message.toString(), 
+            "Search Results for: '" + searchTerm + "'", 
+            JOptionPane.INFORMATION_MESSAGE);
+    }
+}
+    
+
+
     private Node getNodeAtIndex(int index) {
         if (playlist == null || index < 0) return null;
     
@@ -497,6 +638,7 @@ public class MainFrame extends JFrame {
         }
     }
     
+
     public static void main(String[] args) {
         // Use this to start your application
         SwingUtilities.invokeLater(() -> new MainFrame());
