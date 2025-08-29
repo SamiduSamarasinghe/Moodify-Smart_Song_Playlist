@@ -175,5 +175,19 @@ public class DoublyLinkedList implements Serializable {
                 }
                 return nodes;
         }
+        
+        //helper method find node by song name
+        public Node findNodeBySongName(String songName) {
+            if (head == null) return null;
+    
+            Node current = head;
+            while (current != null) {
+                if (current.songName.equalsIgnoreCase(songName)) {
+                    return current;
+                }
+                current = current.nextNode;
+            }
+            return null;
+        }
 
 }

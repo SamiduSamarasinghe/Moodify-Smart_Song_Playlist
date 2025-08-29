@@ -32,15 +32,22 @@ public class MainFrame extends JFrame {
     
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
-    
+    // for smart auto play
     private boolean autoPlayEnabled = false;
-    private Timer autoPlayTimer; // for smart auto play
+    private Timer autoPlayTimer;
+    private Timer songDurationTimer;
+    private int remainingSeconds;
+    
     
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
         playlistSorter = new PlaylistSorter();
         initializeUI();
         updatePlayListDisplay();
+        
+        //initialize the song duration timer
+        songDurationTimer = new Timer(1000, e -> handleSongTimerTick()); //fires every second
+        songDurationTimer.setRepeats(true);
     
     // Add window listener to save on exit
     addWindowListener(new java.awt.event.WindowAdapter() {
@@ -406,15 +413,35 @@ public class MainFrame extends JFrame {
     
     private void performMoodShuffle() {
         if (playlist != null && playlist.head != null) {
+            //store the current song name before shuffling
+            String currentSongName = (currentNode != null) ? currentNode.songName : null;
             
             int intensity = chooseShuffleIntensity();
             MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, intensity);
 
+            //restore the currentNode after shuffling
+            if (currentSongName != null){
+                currentNode = playlist.findNodeBySongName(currentSongName);
+            }
+            
             updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
         } else {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
         }
+    }
+    //helper method to find node by song
+    private Node findNodeBySongName(String songName){
+        if (playlist == null || playlist.head == null) return null;
+        
+        Node current = playlist.head;
+        while (current != null) {
+            if (current.songName.equalsIgnoreCase(songName)){
+                return current;
+            }
+            current = current.nextNode;
+        }
+        return null;
     }
     
     private void updatePlayListDisplay() {
@@ -464,6 +491,9 @@ public class MainFrame extends JFrame {
             currentNode = playlist.head;
         }
         isPlaying = true;
+        //start duration timer
+        remainingSeconds = currentNode.getDuration();
+        songDurationTimer.start();
         
         JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
         + " - " + currentNode.artistName);
@@ -472,25 +502,31 @@ public class MainFrame extends JFrame {
     
     private void pauseSong(){
         isPlaying = false;
+        songDurationTimer.stop(); //stop timer when paused
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
     
     private void nextSong(){
         if (currentNode != null && currentNode.nextNode != null){
             currentNode = currentNode.nextNode;
-            JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
-            updatePlayListDisplay();
-            
-            if (autoPlayEnabled) {
-                isPlaying = true;
-                playSong();
+                
+            if (isPlaying){
+                //reset timer for new song
+                remainingSeconds = currentNode.getDuration();
+                songDurationTimer.restart();
+                
+                JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
+                        + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ") ");    
             } else {
                 JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
             }
+            updatePlayListDisplay();
+            
             
         }else {
             JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
             isPlaying = false;
+            songDurationTimer.stop(); //stop timer when no more songs
             updatePlayListDisplay();
         }
     }
@@ -685,6 +721,15 @@ public class MainFrame extends JFrame {
                 listModel.addElement(songInfo);
             }
             current = current.nextNode;
+        }
+    }
+    //add timer handler method
+    private void handleSongTimerTick(){
+        if (isPlaying && currentNode != null && autoPlayEnabled) {
+            remainingSeconds -- ;
+            if (remainingSeconds <= 0) {
+                nextSong();// song finished, move to next 
+            }
         }
     }
     
