@@ -33,7 +33,6 @@ public class MainFrame extends JFrame {
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
     // for smart auto play
-    private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer;
     private Timer songDurationTimer;
     private int remainingSeconds;
@@ -273,99 +272,129 @@ public class MainFrame extends JFrame {
     }
     
     private JPanel createControlPanel() {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
-    panel.setBorder(BorderFactory.createTitledBorder(
-        BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
-        "Playlist Controls"
-    ));
-    panel.setBackground(new Color(250, 250, 250));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
+            "Playlist Controls"
+        ));
+        panel.setBackground(new Color(250, 250, 250));
     
-    JCheckBox autoPlayCheckbox = new JCheckBox("Auto-Play");
-    autoPlayCheckbox.setFont(new Font("Arial", Font.BOLD, 12));
-    autoPlayCheckbox.addActionListener(e -> autoPlayEnabled = autoPlayCheckbox.isSelected());
-    panel.add(autoPlayCheckbox);
-
-    // Use text labels instead of emojis
-    String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Save", "Import", "Clear"};
+        //previous button
+        JButton prevButton = createIconButton("<-", "Previous");
+        prevButton.addActionListener(e -> previousSong());
     
-    for (String label : buttonLabels) {
-        JButton button = new JButton(label);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setBackground(new Color(70, 130, 180)); // Blue background
-        button.setForeground(Color.WHITE); // White text
-        button.setOpaque(true); // Make background visible
-        button.setBorderPainted(false); // Remove border
-        button.setFocusPainted(false);
-        button.setMargin(new Insets(8, 12, 8, 12));
-        
-        // Special colors for important buttons
-        if (label.contains("Save")) {
-            button.setBackground(new Color(50, 150, 50)); // Green for save
-        } else if (label.contains("Clear")) {
-            button.setBackground(new Color(200, 50, 50)); // Red for clear
-        } else if (label.contains("Import")) {
-            button.setBackground(new Color(100, 100, 200)); // Purple for import
-        }
-        
-        // Add hover effect
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                Color original = button.getBackground();
-                button.setBackground(new Color(
-                    Math.max(original.getRed() - 20, 0),
-                    Math.max(original.getGreen() - 20, 0),
-                    Math.max(original.getBlue() - 20, 0)
-                )); // Darker on hover
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                // Restore original color based on button type
-                if (label.contains("Save")) {
-                    button.setBackground(new Color(50, 150, 50));
-                } else if (label.contains("Clear")) {
-                    button.setBackground(new Color(200, 50, 50));
-                } else if (label.contains("Import")) {
-                    button.setBackground(new Color(100, 100, 200));
-                } else {
-                    button.setBackground(new Color(70, 130, 180));
-                }
+        //play / pause toggle button
+        JToggleButton playPauseButton = createToggleButton(">", "||", "Play", "Pause");
+        playPauseButton.addActionListener(e -> {
+            if (playPauseButton.isSelected()) {
+                pauseSong();
+            } else {
+                playSong();
             }
         });
-        
-        switch (label) {
-            case "Play":
-                button.addActionListener(e -> playSong());
-                break;
-            case "Pause":
-                button.addActionListener(e -> pauseSong());
-                break;
-            case "Next": 
-                button.addActionListener(e -> nextSong());
-                break;
-            case "Previous":
-                button.addActionListener(e -> previousSong());
-                break;
-            case "Mood Shuffle":
-                button.addActionListener(e -> performMoodShuffle());
-                break;
-            case "Clear":
-                button.addActionListener(e -> clearPlaylist());
-                break;
-            case "Sort":
-                button.addActionListener(e-> perfromMoodSort());
-                break;
-            case "Save":
-                button.addActionListener(e -> savePlaylistManual());
-                break;
-            case "Import":
-                button.addActionListener(e -> importPlaylistManual());
-                break;
-            default:
-                break;
-        }            
-        panel.add(button);
+        //next button
+        JButton nextButton = createIconButton("->", "Next");
+        nextButton.addActionListener(e -> nextSong());
+    
+        //skip backward
+        JButton skipBackButton = createIconButton("<<", "Skip Back 10s");
+        skipBackButton.addActionListener(e -> skipBackward());
+    
+        //skip forward
+        JButton skipForwardButton = createIconButton(">>", "Skip Forward 10s");
+        skipForwardButton.addActionListener(e -> skipForward());
+    
+        //mood shuffle 
+        JButton shuffleButton = createIconButton("~~", "Mood Shuffle");
+        shuffleButton.addActionListener(e -> performMoodShuffle());
+    
+        //sort button
+        JButton sortButton = createIconButton("^^", "Sort");
+        sortButton.addActionListener(e -> perfromMoodSort());
+    
+        //import button
+        JButton importButton = createIconButton("Import️", "Import");
+        importButton.addActionListener(e -> importPlaylistManual());
+    
+        //export button
+        JButton exportButton = createIconButton("Export️", "Export");
+        exportButton.addActionListener(e -> savePlaylistManual());
+    
+        //clear button
+        JButton clearButton = createIconButton("Clear️", "Clear");
+        clearButton.addActionListener(e -> clearPlaylist());
+    
+        //add buttons to panel in order
+        panel.add(shuffleButton);
+        panel.add(new JSeparator(SwingConstants.VERTICAL));
+        panel.add(skipBackButton);
+        panel.add(prevButton);
+        panel.add(playPauseButton);
+        panel.add(nextButton);
+        panel.add(skipForwardButton);
+        panel.add(new JSeparator(SwingConstants.VERTICAL));
+        panel.add(sortButton);
+        panel.add(new JSeparator(SwingConstants.VERTICAL));
+        panel.add(importButton);
+        panel.add(exportButton);
+        panel.add(new JSeparator(SwingConstants.VERTICAL));
+        panel.add(clearButton);
+    
+        return panel;
     }
-    return panel;
-}
+    //helper method to create icon button
+    private JButton createIconButton(String text, String tooltip) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setToolTipText(tooltip);
+        button.setPreferredSize(new Dimension(60, 35));
+        button.setBackground(new Color(70, 130, 180));
+        button.setForeground(Color.WHITE);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setMargin(new Insets(2, 5, 2, 5));
+
+        
+        //add hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(50, 110, 160));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(new Color(70, 130, 180));
+            }
+        });
+        return button;
+    }
+    //helper method to create toggle button with play/pause states
+    private JToggleButton createToggleButton(String playIcon, String pauseIcon, String playTooltip, String pauseTooltip){
+        JToggleButton button = new JToggleButton(playIcon);
+        button.setFont(new Font("Arial", Font.PLAIN, 16));
+        button.setToolTipText(playTooltip);
+        button.setPreferredSize(new Dimension(40, 40));
+        button.setBackground(new Color(60, 180, 75)); // Green for play
+        button.setForeground(Color.WHITE);
+        button.setOpaque(true);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+            button.setMargin(new Insets(2, 5, 2, 5));
+
+        
+        //change color when toggled
+        button.addItemListener(e -> {
+            if (button.isSelected()) {
+                button.setText(pauseIcon);
+                button.setToolTipText(pauseTooltip);
+                button.setBackground(new Color(200, 150, 50)); //orange for pause
+            } else {
+                button.setText(playIcon);
+                button.setToolTipText(playTooltip);
+                button.setBackground(new Color(60, 180, 75)); //green for play
+            }
+        });
+        return button;
+    }
     
     // NEW METHOD TO HANDLE MANUAL SAVE PLAYLIST
     private void savePlaylistManual() {
@@ -462,26 +491,26 @@ public class MainFrame extends JFrame {
             }
         }
     }
-           //shuffle intensity method
     
+    //shuffle intensity method
     private int chooseShuffleIntensity() {
         String[] options = {"LIGHT", "MEDIUM", "HIGH"};
-    int choice = JOptionPane.showOptionDialog(this,
-        "Choose Shuffle Intensity:",
-        "Shuffle Intensity",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.QUESTION_MESSAGE,
-        null,
-        options,
-        options[1]
-    );
+        int choice = JOptionPane.showOptionDialog(this,                              
+            "Choose Shuffle Intensity:",
+            "Shuffle Intensity",       
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[1]
+        );
     
-    if (choice == 0) return MoodShuffler.INTENSITY_LIGHT;
-    if (choice == 1) return MoodShuffler.INTENSITY_MEDIUM;
-    if (choice == 2) return MoodShuffler.INTENSITY_HIGH;
-    return MoodShuffler.INTENSITY_MEDIUM;
+        if (choice == 0) return MoodShuffler.INTENSITY_LIGHT;
+        if (choice == 1) return MoodShuffler.INTENSITY_MEDIUM;
+        if (choice == 2) return MoodShuffler.INTENSITY_HIGH;
+        return MoodShuffler.INTENSITY_MEDIUM;
     }
-    
+    //play song method
     private void playSong(){
         if (playlist == null || playlist.head == null){
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
@@ -496,9 +525,20 @@ public class MainFrame extends JFrame {
         songDurationTimer.start();
         
         JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
-        + " - " + currentNode.artistName);
+        + " - " + currentNode.artistName + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + " )");
         updatePlayListDisplay();        
     }
+    //add timer for autu-play
+    private void handleSongTimerTick(){
+        if (isPlaying && currentNode != null) {
+            remainingSeconds--;      
+        
+            if (remainingSeconds <= 0) {
+                nextSong(); // Song finished, move to next automatically
+            }
+        }
+    }
+    
     
     private void pauseSong(){
         isPlaying = false;
@@ -510,19 +550,13 @@ public class MainFrame extends JFrame {
         if (currentNode != null && currentNode.nextNode != null){
             currentNode = currentNode.nextNode;
                 
-            if (isPlaying){
                 //reset timer for new song
                 remainingSeconds = currentNode.getDuration();
                 songDurationTimer.restart();
                 
                 JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
-                        + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ") ");    
-            } else {
-                JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
-            }
-            updatePlayListDisplay();
-            
-            
+                        + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ") ");                         
+                    updatePlayListDisplay();                   
         }else {
             JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
             isPlaying = false;
@@ -534,15 +568,15 @@ public class MainFrame extends JFrame {
     private void previousSong(){
         if (currentNode != null && currentNode.previousNode != null){
             currentNode = currentNode.previousNode;
-            JOptionPane.showMessageDialog(this, "Previous: " + currentNode.songName);
-            updatePlayListDisplay();
             
-            if (autoPlayEnabled) {
-                isPlaying = true;
-                playSong();
-            } else {
-                JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
-            }
+            //reset timer for the previous song
+            remainingSeconds = currentNode.getDuration();
+            songDurationTimer.restart();
+            
+            JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
+                + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ")");
+            updatePlayListDisplay();
+                       
         }else{
             JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
         }
@@ -557,6 +591,27 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
+    
+    private void skipForward() {
+        if (currentNode != null && isPlaying) {
+            //skip 10secs
+            remainingSeconds = Math.max(0, remainingSeconds - 10);
+            
+            if (remainingSeconds <= 0){
+                nextSong(); //if we skip past the end, then go to next song
+            } else {
+                JOptionPane.showMessageDialog(this, "Skipped forward 10 seconds");
+            }
+        }
+    }
+    private void skipBackward(){
+        if (currentNode != null && isPlaying) {
+            //skip 10 secs
+            remainingSeconds = Math.min(currentNode.getDuration(), remainingSeconds + 10);
+            JOptionPane.showMessageDialog(this, "Skipped backward 10 seconds");
+        }
+    }
+    
 
                 //  REMOVE SONG FUNCTIONALITY
     
@@ -721,15 +776,6 @@ public class MainFrame extends JFrame {
                 listModel.addElement(songInfo);
             }
             current = current.nextNode;
-        }
-    }
-    //add timer handler method
-    private void handleSongTimerTick(){
-        if (isPlaying && currentNode != null && autoPlayEnabled) {
-            remainingSeconds -- ;
-            if (remainingSeconds <= 0) {
-                nextSong();// song finished, move to next 
-            }
         }
     }
     
