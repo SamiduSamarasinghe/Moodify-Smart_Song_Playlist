@@ -281,7 +281,7 @@ public class MainFrame extends JFrame {
                     button.addActionListener(e -> clearPlaylist());
                     break;
                 case "Sort":
-                    button.addActionListener(e-> perfromMoodSort());
+                    button.addActionListener(e-> perfromSort());
                     break;
                 default:
                     break;
@@ -291,7 +291,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
     
-    private void perfromMoodSort(){
+    private void perfromSort(){
         String[] sortOptions = {"Sort By Mood","Sort By Duration"};
         
         int result = JOptionPane.showOptionDialog(
