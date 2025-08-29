@@ -230,7 +230,7 @@ public class MainFrame extends JFrame {
         panel.add(autoPlayCheckbox);
 
         // ADDED "Save Playlist" BUTTON TO THE BUTTON LABELS ARRAY
-        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Save Playlist", "Clear All"};
+        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Save Playlist", "Import Playlist", "Clear All"};
         for (String label : buttonLabels) {
             JButton button = new JButton(label);
             
@@ -258,6 +258,9 @@ public class MainFrame extends JFrame {
                     break;
                 case "Save Playlist": // NEW CASE FOR SAVE PLAYLIST BUTTON
                     button.addActionListener(e -> savePlaylistManual());
+                    break;
+                case "Import Playlist":
+                    button.addActionListener(e -> importPlaylistManual());
                     break;
                 default:
                     break;
@@ -598,6 +601,17 @@ public class MainFrame extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainFrame());
     }    
+    
+    private void importPlaylistManual() {
+    DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
+    if (importedPlaylist != null && importedPlaylist.head != null) {
+        this.playlist = importedPlaylist;
+        currentNode = null;
+        isPlaying = false;
+        updatePlayListDisplay();
+        JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
+    }
+}
 }
 
 /*
