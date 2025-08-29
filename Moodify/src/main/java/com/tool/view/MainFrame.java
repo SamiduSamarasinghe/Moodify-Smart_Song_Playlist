@@ -7,15 +7,25 @@ package com.tool.view;
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
 import com.tool.control.PlaylistSorter;
+import com.tool.control.YouTubeUrlHelper;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
 import javax.swing.*;
 
 
+//vlcj imports
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+
+
+
+
+
+
 
 public class MainFrame extends JFrame {
     
+    private EmbeddedMediaPlayerComponent embeddedMediaPlayerComponent;
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
@@ -36,6 +46,7 @@ public class MainFrame extends JFrame {
     
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
+    private String streamUrl;
     
     
 
@@ -78,6 +89,15 @@ public class MainFrame extends JFrame {
         // 4. Build the South Panel (Controls)
         JPanel controlPanel = createControlPanel();
         add(controlPanel, BorderLayout.SOUTH);
+        
+        //vlc player  creation
+        
+        embeddedMediaPlayerComponent = new EmbeddedMediaPlayerComponent();
+        JPanel videoPanel = new JPanel(new BorderLayout());
+        videoPanel.add(embeddedMediaPlayerComponent, BorderLayout.CENTER);
+        add(videoPanel, BorderLayout.EAST);
+        
+        videoPanel.setPreferredSize(new Dimension(400, 300)); 
 
         // 5. Finalize and display the JFrame
         pack(); // Sizes the window to fit its components
@@ -393,15 +413,32 @@ public class MainFrame extends JFrame {
         }
         isPlaying = true;
         
-        //highlight the current song anddisplay message
-        JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
-        + " - " + currentNode.artistName);
-        updatePlayListDisplay(); //refresh to show current song        
+        //run the getStreamLink Method on a separeate thread to avoid frezzing main GUI
+        new Thread(()->{
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
+            //
+            if(streamUrl != null){
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                
+                SwingUtilities.invokeLater(()->{
+                    JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
+                    updatePlayListDisplay();
+                });
+            }
+            else{
+                SwingUtilities.invokeLater(()->{
+                JOptionPane.showMessageDialog(this,"Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                updatePlayListDisplay();
+                });
+            }
+        }).start();
+        
     }
     
     //pause button
     private void pauseSong(){
         isPlaying = false;
+        embeddedMediaPlayerComponent.mediaPlayer().controls().pause();
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
     
