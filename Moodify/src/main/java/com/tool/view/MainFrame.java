@@ -7,6 +7,7 @@ package com.tool.view;
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
 import com.tool.control.PlaylistSorter;
+import com.tool.control.RemoveSong;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
@@ -341,6 +342,7 @@ public class MainFrame extends JFrame {
             }
         }
     }
+           //shuffle intensity method
     
     private int chooseShuffleIntensity() {
         String[] options = {"LIGHT", "MEDIUM", "HIGH"};
@@ -426,17 +428,22 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
+
+                //  REMOVE SONG FUNCTIONALITY
     
-    private void addRightClickMenu() {
-    JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem removeItem = new JMenuItem("Remove Song");
+        private void addRightClickMenu()
+             {
+                 JPopupMenu popupMenu = new JPopupMenu();
+                  JMenuItem removeItem = new JMenuItem("Remove Song");
     
-    removeItem.addActionListener(e -> removeSelectedSong());
-    popupMenu.add(removeItem);
+
+                     removeItem.addActionListener(e -> removeSelectedSong());
+                     popupMenu.add(removeItem);
     
-    playListJList.setComponentPopupMenu(popupMenu);
+                     playListJList.setComponentPopupMenu(popupMenu);
     
-    playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+                    playListJList.addMouseListener(new java.awt.event.MouseAdapter()  
+                    {
         public void mousePressed(java.awt.event.MouseEvent e) {
             if (e.isPopupTrigger()) {
                 int index = playListJList.locationToIndex(e.getPoint());
@@ -447,16 +454,21 @@ public class MainFrame extends JFrame {
         }
     });
 }
-
-    private void removeSelectedSong() {
-    int selectedIndex = playListJList.getSelectedIndex();
-    if (selectedIndex == -1) {
-        JOptionPane.showMessageDialog(this, "Please select a song to remove!", "Error", JOptionPane.WARNING_MESSAGE);
-        return;
+            // remove select  song 
+              
+      private void removeSelectedSong() {
+                    int selectedIndex = playListJList.getSelectedIndex();
+               if (selectedIndex == -1) {
+              JOptionPane.showMessageDialog(this, "Please select a song to remove!", "Error", JOptionPane.WARNING_MESSAGE);
+               return;
     }
+    
+                // Get song name from display
     
     String selectedValue = playListJList.getSelectedValue();
     String songName = selectedValue.split(" - ")[0].trim();
+    
+                // Show confirmation dialog
     
     int confirm = JOptionPane.showConfirmDialog(this, 
         "Are you sure you want to remove this song?\n\n" +
@@ -470,7 +482,11 @@ public class MainFrame extends JFrame {
         return;
     }
     
-    boolean removed = removeSongFromPlaylist(songName);
+
+                //Use RemoveSong controller to remove
+     
+          RemoveSong removeController = new RemoveSong(playlist);
+        boolean removed = removeController.removeSongFromPlaylist(songName);
     
     if (removed) {
         JOptionPane.showMessageDialog(this, "Song removed successfully: " + songName, "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -481,26 +497,10 @@ public class MainFrame extends JFrame {
     }
 }
 
-private boolean removeSongFromPlaylist(String songName) {
-    if (playlist == null || playlist.head == null) return false;
-    
-    Node current = playlist.head;
-    while (current != null) {
-        if (current.songName.equalsIgnoreCase(songName)) {
-            if (current == playlist.head) {
-                playlist.deleteBegin();
-            } else if (current == playlist.tail) {
-                playlist.deleteEnd();
-            } else {
-                current.previousNode.nextNode = current.nextNode;
-                current.nextNode.previousNode = current.previousNode;
-            }
-            return true;
-        }
-        current = current.nextNode;
-    }
-    return false;
-}
+           // SEARCH FUNCTIONALITY 
+        private void setupSearchFunctionality() {
+            
+    // Find the search button and add action listener
     
     private void setupSearchFunctionality() {
     Component[] components = ((JPanel)playListJList.getParent().getParent().getComponent(0)).getComponents();
@@ -516,8 +516,9 @@ private boolean removeSongFromPlaylist(String songName) {
         }
     }
 }
-
-    private void searchSongs() {
+                   // search song 
+        
+        private void searchSongs() {
     String searchTerm = searchField.getText().trim();
     
     if (searchTerm.isEmpty()) {
@@ -558,7 +559,6 @@ private boolean removeSongFromPlaylist(String songName) {
             JOptionPane.INFORMATION_MESSAGE);
     }
 }
-    
     private Node getNodeAtIndex(int index) {
         if (playlist == null || index < 0) return null;
     
