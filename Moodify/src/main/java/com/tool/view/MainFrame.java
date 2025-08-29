@@ -52,76 +52,105 @@ public class MainFrame extends JFrame {
     }
     
     private void initializeUI() {
-        // 1. Basic JFrame setup
-        setTitle("Music Playlist Manager");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(10, 10)); // Main layout with gaps
-        getContentPane().setBackground(Color.LIGHT_GRAY);
-
-        // 2. Build the North Panel (Input Form)
-        JPanel inputPanel = createInputPanel();
-        add(inputPanel, BorderLayout.NORTH);
-
-        // 3. Build the Center Panel (Playlist View)
-        JPanel centerPanel = createCenterPanel();
-        add(centerPanel, BorderLayout.CENTER);
-        addRightClickMenu();
-      
-        
-        // 4. Build the South Panel (Controls)
-        JPanel controlPanel = createControlPanel();
-        add(controlPanel, BorderLayout.SOUTH);
-
-        // 5. Finalize and display the JFrame
-        pack(); // Sizes the window to fit its components
-        setLocationRelativeTo(null); // Center on screen
-        setVisible(true);
+    // 1. Basic JFrame setup
+    setTitle("Music Playlist Manager");
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setLayout(new BorderLayout(10, 10));
+    
+    // Set modern look and feel
+    try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+    
+    getContentPane().setBackground(new Color(240, 240, 240)); // Light gray background
+
+    // 2. Build the North Panel (Input Form)
+    JPanel inputPanel = createInputPanel();
+    add(inputPanel, BorderLayout.NORTH);
+
+    // 3. Build the Center Panel (Playlist View)
+    JPanel centerPanel = createCenterPanel();
+    add(centerPanel, BorderLayout.CENTER);
+    addRightClickMenu();
+  
+    
+    // 4. Build the South Panel (Controls)
+    JPanel controlPanel = createControlPanel();
+    add(controlPanel, BorderLayout.SOUTH);
+
+    // 5. Finalize and display the JFrame
+    setMinimumSize(new Dimension(800, 600)); // Set minimum size
+    pack();
+    setLocationRelativeTo(null);
+    setVisible(true);
+}
     
     private JPanel createInputPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(BorderFactory.createTitledBorder("Add New Song"));
+    panel.setBorder(BorderFactory.createTitledBorder(
+        BorderFactory.createLineBorder(new Color(100, 100, 200), 2), 
+        "Add New Song"
+    ));
+    panel.setBackground(new Color(250, 250, 250));
+
     GridBagConstraints gbc = new GridBagConstraints();
-    gbc.insets = new Insets(5, 5, 5, 5); // Padding
+    gbc.insets = new Insets(8, 8, 8, 8); // Increased padding
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weightx = 1.0;
 
     // Row 0: Song Title
     gbc.gridx = 0; gbc.gridy = 0;
-    panel.add(new JLabel("Song Title:"), gbc);
+    JLabel titleLabel = new JLabel("Song Title:");
+    titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+    panel.add(titleLabel, gbc);
     gbc.gridx = 1;
     titleTextField = new JTextField(20);
+    titleTextField.setFont(new Font("Arial", Font.PLAIN, 12));
     panel.add(titleTextField, gbc);
 
     // Row 1: Artist
     gbc.gridx = 0; gbc.gridy = 1;
-    panel.add(new JLabel("Artist:"), gbc);
+    JLabel artistLabel = new JLabel("Artist:");
+    artistLabel.setFont(new Font("Arial", Font.BOLD, 12));
+    panel.add(artistLabel, gbc);
     gbc.gridx = 1;
     artistTextField = new JTextField(20);
+    artistTextField.setFont(new Font("Arial", Font.PLAIN, 12));
     panel.add(artistTextField, gbc);
 
     // Row 2: Duration
     gbc.gridx = 0; gbc.gridy = 2;
-    panel.add(new JLabel("Duration (MM:SS):"), gbc);
+    JLabel durationLabel = new JLabel("Duration (MM:SS):");
+    durationLabel.setFont(new Font("Arial", Font.BOLD, 12));
+    panel.add(durationLabel, gbc);
     gbc.gridx = 1;
     durationTextField = new JTextField(10);
+    durationTextField.setFont(new Font("Arial", Font.PLAIN, 12));
     durationTextField.setToolTipText("e.g., 3:45");
     panel.add(durationTextField, gbc);
 
-    // Row 3: YouTube URL (NEW FIELD)
+    // Row 3: YouTube URL
     gbc.gridx = 0; gbc.gridy = 3;
-    panel.add(new JLabel("YouTube URL:"), gbc);
+    JLabel urlLabel = new JLabel("YouTube URL:");
+    urlLabel.setFont(new Font("Arial", Font.BOLD, 12));
+    panel.add(urlLabel, gbc);
     gbc.gridx = 1;
     urlTextField = new JTextField(20);
+    urlTextField.setFont(new Font("Arial", Font.PLAIN, 12));
     panel.add(urlTextField, gbc);
 
     // Row 4: Mood Selection
     gbc.gridx = 0; gbc.gridy = 4;
-    panel.add(new JLabel("Mood:"), gbc);
+    JLabel moodLabel = new JLabel("Mood:");
+    moodLabel.setFont(new Font("Arial", Font.BOLD, 12));
+    panel.add(moodLabel, gbc);
     gbc.gridx = 1;
-    
+
     String[] moods = {"Select Mood", "Calm", "Neutral", "Energetic"};
     moodDropdown = new JComboBox<>(moods);
+    moodDropdown.setFont(new Font("Arial", Font.PLAIN, 12));
     moodDropdown.setSelectedIndex(0);
     panel.add(moodDropdown, gbc);
 
@@ -130,6 +159,21 @@ public class MainFrame extends JFrame {
     gbc.gridwidth = 2;
     gbc.anchor = GridBagConstraints.CENTER;
     JButton addButton = new JButton("Add Song");
+    addButton.setFont(new Font("Arial", Font.BOLD, 12));
+    addButton.setBackground(new Color(60, 180, 75)); // Green background
+    addButton.setForeground(Color.WHITE); // White text
+    addButton.setOpaque(true); // This makes the background color visible
+    addButton.setBorderPainted(false); // This removes the border line
+    addButton.setFocusPainted(false);
+    
+    addButton.addMouseListener(new java.awt.event.MouseAdapter() {
+    public void mouseEntered(java.awt.event.MouseEvent evt) {
+        addButton.setBackground(new Color(45, 160, 60)); // Darker green on hover
+    }
+    public void mouseExited(java.awt.event.MouseEvent evt) {
+        addButton.setBackground(new Color(60, 180, 75)); // Original green
+    }
+});
     
     addButton.addActionListener(e -> {
         String title = titleTextField.getText().trim();
@@ -222,53 +266,99 @@ public class MainFrame extends JFrame {
     }
     
     private JPanel createControlPanel() {
-        JPanel panel = new JPanel(new FlowLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Playlist Controls"));
-        
-        JCheckBox autoPlayCheckbox = new JCheckBox("Auto-Play");
-        autoPlayCheckbox.addActionListener(e -> autoPlayEnabled = autoPlayCheckbox.isSelected());
-        panel.add(autoPlayCheckbox);
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+    panel.setBorder(BorderFactory.createTitledBorder(
+        BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
+        "Playlist Controls"
+    ));
+    panel.setBackground(new Color(250, 250, 250));
+    
+    JCheckBox autoPlayCheckbox = new JCheckBox("Auto-Play");
+    autoPlayCheckbox.setFont(new Font("Arial", Font.BOLD, 12));
+    autoPlayCheckbox.addActionListener(e -> autoPlayEnabled = autoPlayCheckbox.isSelected());
+    panel.add(autoPlayCheckbox);
 
-        // ADDED "Save Playlist" BUTTON TO THE BUTTON LABELS ARRAY
-        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Save Playlist", "Import Playlist", "Clear All"};
-        for (String label : buttonLabels) {
-            JButton button = new JButton(label);
-            
-            switch (label) {
-                case "Play":
-                    button.addActionListener(e -> playSong());
-                    break;
-                case "Pause":
-                    button.addActionListener(e -> pauseSong());
-                    break;
-                case "Next": 
-                    button.addActionListener(e -> nextSong());
-                    break;
-                case "Previous":
-                    button.addActionListener(e -> previousSong());
-                    break;
-                case "Mood Shuffle":
-                    button.addActionListener(e -> performMoodShuffle());
-                    break;
-                case "Clear All":
-                    button.addActionListener(e -> clearPlaylist());
-                    break;
-                case "Sort":
-                    button.addActionListener(e-> perfromMoodSort());
-                    break;
-                case "Save Playlist": // NEW CASE FOR SAVE PLAYLIST BUTTON
-                    button.addActionListener(e -> savePlaylistManual());
-                    break;
-                case "Import Playlist":
-                    button.addActionListener(e -> importPlaylistManual());
-                    break;
-                default:
-                    break;
-            }            
-            panel.add(button);
+    // Use text labels instead of emojis
+    String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Save", "Import", "Clear"};
+    
+    for (String label : buttonLabels) {
+        JButton button = new JButton(label);
+        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setBackground(new Color(70, 130, 180)); // Blue background
+        button.setForeground(Color.WHITE); // White text
+        button.setOpaque(true); // Make background visible
+        button.setBorderPainted(false); // Remove border
+        button.setFocusPainted(false);
+        button.setMargin(new Insets(8, 12, 8, 12));
+        
+        // Special colors for important buttons
+        if (label.contains("Save")) {
+            button.setBackground(new Color(50, 150, 50)); // Green for save
+        } else if (label.contains("Clear")) {
+            button.setBackground(new Color(200, 50, 50)); // Red for clear
+        } else if (label.contains("Import")) {
+            button.setBackground(new Color(100, 100, 200)); // Purple for import
         }
-        return panel;
+        
+        // Add hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                Color original = button.getBackground();
+                button.setBackground(new Color(
+                    Math.max(original.getRed() - 20, 0),
+                    Math.max(original.getGreen() - 20, 0),
+                    Math.max(original.getBlue() - 20, 0)
+                )); // Darker on hover
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                // Restore original color based on button type
+                if (label.contains("Save")) {
+                    button.setBackground(new Color(50, 150, 50));
+                } else if (label.contains("Clear")) {
+                    button.setBackground(new Color(200, 50, 50));
+                } else if (label.contains("Import")) {
+                    button.setBackground(new Color(100, 100, 200));
+                } else {
+                    button.setBackground(new Color(70, 130, 180));
+                }
+            }
+        });
+        
+        switch (label) {
+            case "Play":
+                button.addActionListener(e -> playSong());
+                break;
+            case "Pause":
+                button.addActionListener(e -> pauseSong());
+                break;
+            case "Next": 
+                button.addActionListener(e -> nextSong());
+                break;
+            case "Previous":
+                button.addActionListener(e -> previousSong());
+                break;
+            case "Mood Shuffle":
+                button.addActionListener(e -> performMoodShuffle());
+                break;
+            case "Clear":
+                button.addActionListener(e -> clearPlaylist());
+                break;
+            case "Sort":
+                button.addActionListener(e-> perfromMoodSort());
+                break;
+            case "Save":
+                button.addActionListener(e -> savePlaylistManual());
+                break;
+            case "Import":
+                button.addActionListener(e -> importPlaylistManual());
+                break;
+            default:
+                break;
+        }            
+        panel.add(button);
     }
+    return panel;
+}
     
     // NEW METHOD TO HANDLE MANUAL SAVE PLAYLIST
     private void savePlaylistManual() {
