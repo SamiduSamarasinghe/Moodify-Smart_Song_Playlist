@@ -11,6 +11,8 @@ import com.tool.control.RemoveSong;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.*;
 
 public class MainFrame extends JFrame {
@@ -36,6 +38,12 @@ public class MainFrame extends JFrame {
     private Timer autoPlayTimer;
     private Timer songDurationTimer;
     private int remainingSeconds;
+    
+    //color types for each mood
+    private static final Color CALM_COLOR = new Color(200, 230, 200);//green
+    private static final Color NEUTRAL_COLOR = new Color(25, 240, 200);//yellow
+    private static final  Color ENERGETIC_COLOR = new Color(255, 200, 200); //red
+    private static final Color DEFAULT_COLOR = new Color(140, 240, 240);//gray
     
     
     public MainFrame() {
@@ -459,6 +467,86 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
+    //update theme based on mood
+    private void updateThemeBasedOnMood(){
+        Color themeColor = DEFAULT_COLOR;
+        
+        if (currentNode != null && isPlaying){
+            switch(currentNode.getMoodScore()){
+                case 1: 
+                    themeColor = CALM_COLOR;
+                    break;
+                case 2: 
+                    themeColor = NEUTRAL_COLOR;
+                    break;
+                case 3: 
+                    themeColor = ENERGETIC_COLOR;
+                    break;
+                default:
+                    themeColor = DEFAULT_COLOR;
+            }
+        }
+        getContentPane().setBackground(themeColor); //apply theme to main components
+        updatePanelColors(themeColor); //update all panels to match the theme
+        applyThemeTransition(themeColor);
+    }
+    
+    private void updatePanelColors(Color themeColor){
+        Component[] components = getContentPane().getComponents(); //get all components and update background
+        for (Component comp : components){
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                panel.setBackground(themeColor);
+                
+                updateChildComponents(panel, themeColor);
+            }
+        }
+    }
+    
+    private void updateChildComponents(Container container, Color themeColor) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                panel.setBackground(themeColor);
+                updateChildComponents(panel, themeColor);
+            } else if (comp instanceof JList) {
+                // Keep list background white for readability
+                comp.setBackground(Color.WHITE);
+            } else if (!(comp instanceof JButton) && !(comp instanceof JTextField)) {
+                // Update other components but keep buttons and text fields standard
+                comp.setBackground(themeColor);
+            }
+        }
+    }
+    
+    private void applyThemeTransition(Color targetColor){
+        //simple fade effect
+        Timer transitionTimer = new Timer(50, null);
+        transitionTimer.addActionListener(new ActionListener() {
+            private int step = 0;
+            private final int totalSteps = 10;
+            private final Color startColor = getContentPane().getBackground();
+            
+            @Override
+            public void actionPerformed(ActionEvent e){
+                if (step >= totalSteps) {
+                    transitionTimer.stop();
+                    return;
+                }
+                float ratio = (float) step / totalSteps;
+                int red = (int) (startColor.getRed() * (1 - ratio) + targetColor.getRed() * ratio);
+                int green = (int) (startColor.getGreen() * (1 - ratio) + targetColor.getGreen() * ratio);
+                int blue = (int) (startColor.getBlue() * (1 - ratio) + targetColor.getBlue() * ratio);
+            
+                Color intermediateColor = new Color(red, green, blue);
+                getContentPane().setBackground(intermediateColor);
+                updatePanelColors(intermediateColor);
+            
+                step++;
+            }
+        });
+        transitionTimer.start();
+    }
     //helper method to find node by song
     private Node findNodeBySongName(String songName){
         if (playlist == null || playlist.head == null) return null;
@@ -524,6 +612,9 @@ public class MainFrame extends JFrame {
         remainingSeconds = currentNode.getDuration();
         songDurationTimer.start();
         
+        //update theme based on mood
+        updateThemeBasedOnMood();
+        
         JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
         + " - " + currentNode.artistName + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + " )");
         updatePlayListDisplay();        
@@ -543,6 +634,9 @@ public class MainFrame extends JFrame {
     private void pauseSong(){
         isPlaying = false;
         songDurationTimer.stop(); //stop timer when paused
+        
+        updateThemeBasedOnMood();
+        
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
     
@@ -553,6 +647,8 @@ public class MainFrame extends JFrame {
                 //reset timer for new song
                 remainingSeconds = currentNode.getDuration();
                 songDurationTimer.restart();
+                
+                updateThemeBasedOnMood();
                 
                 JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
                         + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ") ");                         
@@ -572,6 +668,8 @@ public class MainFrame extends JFrame {
             //reset timer for the previous song
             remainingSeconds = currentNode.getDuration();
             songDurationTimer.restart();
+            
+            updateThemeBasedOnMood();
             
             JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
                 + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ")");
