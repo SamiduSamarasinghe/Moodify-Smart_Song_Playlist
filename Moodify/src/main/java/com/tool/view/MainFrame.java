@@ -495,11 +495,7 @@ public class MainFrame extends JFrame {
     } else {
         JOptionPane.showMessageDialog(this, "Failed to remove song: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
-
-           // SEARCH FUNCTIONALITY 
-        private void setupSearchFunctionality() {
-            
+} 
     // Find the search button and add action listener
     
     private void setupSearchFunctionality() {
