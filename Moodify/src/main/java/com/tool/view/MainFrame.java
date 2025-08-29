@@ -12,8 +12,6 @@ import com.tool.model.Node;
 import java.awt.*;
 import javax.swing.*;
 
-
-
 public class MainFrame extends JFrame {
     
     private DoublyLinkedList playlist; //data model
@@ -37,9 +35,6 @@ public class MainFrame extends JFrame {
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
     
-    
-
-
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
         playlistSorter = new PlaylistSorter();
@@ -53,11 +48,8 @@ public class MainFrame extends JFrame {
             PlaylistSaveHelper.savePlaylistToFile(playlist);
         }
     });
-
-//        initializeUI();
-//        updatePlayListDisplay();
-        
     }
+    
     private void initializeUI() {
         // 1. Basic JFrame setup
         setTitle("Music Playlist Manager");
@@ -84,6 +76,7 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null); // Center on screen
         setVisible(true);
     }
+    
     private JPanel createInputPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(BorderFactory.createTitledBorder("Add New Song"));
@@ -118,29 +111,26 @@ public class MainFrame extends JFrame {
     gbc.gridx = 0; gbc.gridy = 3;
     panel.add(new JLabel("YouTube URL:"), gbc);
     gbc.gridx = 1;
-    urlTextField = new JTextField(20); // Create this as a class field if needed elsewhere
+    urlTextField = new JTextField(20);
     panel.add(urlTextField, gbc);
 
-    // Row 4: Mood Selection (NEW DROPDOWN INSTEAD OF SLIDER)
+    // Row 4: Mood Selection
     gbc.gridx = 0; gbc.gridy = 4;
     panel.add(new JLabel("Mood:"), gbc);
     gbc.gridx = 1;
     
-    // Create the dropdown with mood options
     String[] moods = {"Select Mood", "Calm", "Neutral", "Energetic"};
     moodDropdown = new JComboBox<>(moods);
-    moodDropdown.setSelectedIndex(0); // Start with "Select Mood"
+    moodDropdown.setSelectedIndex(0);
     panel.add(moodDropdown, gbc);
 
     // Row 5: Add Song Button
     gbc.gridx = 0; gbc.gridy = 5;
-    gbc.gridwidth = 2; // Make button span both columns
+    gbc.gridwidth = 2;
     gbc.anchor = GridBagConstraints.CENTER;
     JButton addButton = new JButton("Add Song");
     
-    //add actionListner
     addButton.addActionListener(e -> {
-        //placeholder
         String title = titleTextField.getText().trim();
         String artist = artistTextField.getText().trim();
         String durationStr = durationTextField.getText().trim();
@@ -152,8 +142,6 @@ public class MainFrame extends JFrame {
                 "Please fill all fields and select a mood!", 
                 "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
-        
-        
     }
         int durationInSeconds = 0;
     try {
@@ -173,35 +161,26 @@ public class MainFrame extends JFrame {
     }
     playlist.insertSong(title, artist, durationInSeconds, url, moodScore);
     
-    // SAVE THE PLAYLIST IMMEDIATELY AFTER ADDING THE SONG
     PlaylistSaveHelper.savePlaylistToFile(playlist);
     
-   
-    
-    // Clear input fields
     titleTextField.setText("");
     artistTextField.setText("");
     durationTextField.setText("");
     urlTextField.setText("");
     moodDropdown.setSelectedIndex(0);
 
-    // Refresh playlist display
     updatePlayListDisplay();
 
     JOptionPane.showMessageDialog(this, "Song added successfully and playlist saved!");
-    
-    
     });
     panel.add(addButton, gbc);
 
     return panel;
-    
-    
     }
+    
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // Search bar at the top of the center panel
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.add(new JLabel("Search:"));
         searchField = new JTextField(20);
@@ -209,28 +188,23 @@ public class MainFrame extends JFrame {
         JButton searchButton = new JButton("Go");
         searchPanel.add(searchButton);
         
-        //add favorite filter button
         JButton favoritesButton = new JButton("⭐ Favorites");
         favoritesButton.addActionListener(e -> showFavorites());
         searchPanel.add(favoritesButton);
         
         panel.add(searchPanel, BorderLayout.NORTH);
         
-        // search 
     searchButton.addActionListener(e -> searchSongs());
     
     searchPanel.add(searchButton);
     panel.add(searchPanel, BorderLayout.NORTH);
 
-
-
-        // The main playlist display
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
         playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
         @Override
         public void mouseClicked(java.awt.event.MouseEvent e) {
-            if (e.getClickCount() == 2) { //double click
+            if (e.getClickCount() == 2) {
                 int index = playListJList.locationToIndex(e.getPoint());
                 if (index >= 0) {
                     toggleFavorite(index);
@@ -239,27 +213,26 @@ public class MainFrame extends JFrame {
         }
         });
         
-        
         JScrollPane scrollPane = new JScrollPane(playListJList);
         scrollPane.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
+    
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new FlowLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Playlist Controls"));
         
-        //add auto-play checkbox
         JCheckBox autoPlayCheckbox = new JCheckBox("Auto-Play");
         autoPlayCheckbox.addActionListener(e -> autoPlayEnabled = autoPlayCheckbox.isSelected());
         panel.add(autoPlayCheckbox);
 
-        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Clear All"};
+        // ADDED "Save Playlist" BUTTON TO THE BUTTON LABELS ARRAY
+        String[] buttonLabels = {"Play", "Pause", "Next", "Previous", "Sort", "Mood Shuffle", "Save Playlist", "Clear All"};
         for (String label : buttonLabels) {
             JButton button = new JButton(label);
             
-            // Add your action listeners for buttons
             switch (label) {
                 case "Play":
                     button.addActionListener(e -> playSong());
@@ -282,12 +255,27 @@ public class MainFrame extends JFrame {
                 case "Sort":
                     button.addActionListener(e-> perfromMoodSort());
                     break;
+                case "Save Playlist": // NEW CASE FOR SAVE PLAYLIST BUTTON
+                    button.addActionListener(e -> savePlaylistManual());
+                    break;
                 default:
                     break;
             }            
             panel.add(button);
         }
         return panel;
+    }
+    
+    // NEW METHOD TO HANDLE MANUAL SAVE PLAYLIST
+    private void savePlaylistManual() {
+        if (playlist == null || playlist.head == null) {
+            JOptionPane.showMessageDialog(this, 
+                "Playlist is empty! Nothing to save.", 
+                "Save Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        PlaylistSaveHelper.savePlaylistmanual(this, playlist);
     }
     
     private void perfromMoodSort(){
@@ -297,18 +285,15 @@ public class MainFrame extends JFrame {
                 null,"Select Sorting Method","Sort Options",
                 JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE,null,sortOptions,sortOptions[0]);
         
-        //sort by Mood
         if(result == 0){
             String[] moodList = {"Calm","Neutral","Energetic"};
         
-            //show list to select a mood and get the selected mood as a string
             String selectedMood = (String)JOptionPane.showInputDialog(this,"Select a mood to sort by",
                     "Mood Sort",JOptionPane.QUESTION_MESSAGE,null,moodList,moodList[0]);
 
             playlistSorter.sortByMood(playlist,selectedMood);
             updatePlayListDisplay();
         }
-        //sort by Duration
         else{
             String[] timeOptions = {"Accending Order","Deccending Order"};
             
@@ -325,21 +310,19 @@ public class MainFrame extends JFrame {
         }
     }
     
-    // YOUR METHOD TO HANDLE THE SHUFFLE
     private void performMoodShuffle() {
-        // This is where you call your MoodShuffler code
         if (playlist != null && playlist.head != null) {
             
             int intensity = chooseShuffleIntensity();
             MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, intensity);
 
-            updatePlayListDisplay(); // Refresh the JList
+            updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
         } else {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
-    // Method to update the JList from the DoublyLinkedList
+    
     private void updatePlayListDisplay() {
         listModel.clear();
         if (playlist != null && playlist.head != null) {
@@ -349,7 +332,6 @@ public class MainFrame extends JFrame {
                         " [ " + current.getMoodScore() + " ] "+ " - "
                         + playlistSorter.formatDuration(current.getDuration());
                 
-                //add play icon to show current playing song
                 if (current == currentNode && isPlaying){
                     songInfo = "▶ " + songInfo;
                 }
@@ -359,7 +341,6 @@ public class MainFrame extends JFrame {
             }
         }
     }
-    //shuffle intensity method
     
     private int chooseShuffleIntensity() {
         String[] options = {"LIGHT", "MEDIUM", "HIGH"};
@@ -370,52 +351,44 @@ public class MainFrame extends JFrame {
         JOptionPane.QUESTION_MESSAGE,
         null,
         options,
-        options[1] // Default to MEDIUM
+        options[1]
     );
     
-    // Convert choice to intensity constant
     if (choice == 0) return MoodShuffler.INTENSITY_LIGHT;
     if (choice == 1) return MoodShuffler.INTENSITY_MEDIUM;
     if (choice == 2) return MoodShuffler.INTENSITY_HIGH;
-    return MoodShuffler.INTENSITY_MEDIUM; // Default if canceled
+    return MoodShuffler.INTENSITY_MEDIUM;
     }
     
-    //add navigation methods(play/pause/next/previous)
-    //play button
     private void playSong(){
         if (playlist == null || playlist.head == null){
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        //if no song is selected, start from begining
         if(currentNode == null){
             currentNode = playlist.head;
         }
         isPlaying = true;
         
-        //highlight the current song anddisplay message
         JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
         + " - " + currentNode.artistName);
-        updatePlayListDisplay(); //refresh to show current song        
+        updatePlayListDisplay();        
     }
     
-    //pause button
     private void pauseSong(){
         isPlaying = false;
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
     
-    //next button
     private void nextSong(){
         if (currentNode != null && currentNode.nextNode != null){
             currentNode = currentNode.nextNode;
             JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
             updatePlayListDisplay();
             
-            //auto-play logic
             if (autoPlayEnabled) {
                 isPlaying = true;
-                playSong(); //play immediately without dialog
+                playSong();
             } else {
                 JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
             }
@@ -427,7 +400,6 @@ public class MainFrame extends JFrame {
         }
     }
     
-    //previous button
     private void previousSong(){
         if (currentNode != null && currentNode.previousNode != null){
             currentNode = currentNode.previousNode;
@@ -445,7 +417,6 @@ public class MainFrame extends JFrame {
         }
     }
     
-    //clear all button
     private void clearPlaylist(){
         if (playlist != null){
             playlist.clear();
@@ -455,12 +426,11 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
-    // ========== REMOVE FUNCTIONALITY ==========
-private void addRightClickMenu() {
+    
+    private void addRightClickMenu() {
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem removeItem = new JMenuItem("Remove Song");
     
-
     removeItem.addActionListener(e -> removeSelectedSong());
     popupMenu.add(removeItem);
     
@@ -477,19 +447,17 @@ private void addRightClickMenu() {
         }
     });
 }
-            // remove song 
-      private void removeSelectedSong() {
+
+    private void removeSelectedSong() {
     int selectedIndex = playListJList.getSelectedIndex();
     if (selectedIndex == -1) {
         JOptionPane.showMessageDialog(this, "Please select a song to remove!", "Error", JOptionPane.WARNING_MESSAGE);
         return;
     }
     
-    // Get song name from display
     String selectedValue = playListJList.getSelectedValue();
     String songName = selectedValue.split(" - ")[0].trim();
     
-    // Show confirmation dialog
     int confirm = JOptionPane.showConfirmDialog(this, 
         "Are you sure you want to remove this song?\n\n" +
         "Song: " + songName + "\n" +
@@ -499,16 +467,15 @@ private void addRightClickMenu() {
         JOptionPane.WARNING_MESSAGE);
     
     if (confirm != JOptionPane.YES_OPTION) {
-        return; // User clicked No or Cancel
+        return;
     }
     
-    // Remove the song from playlist
     boolean removed = removeSongFromPlaylist(songName);
     
     if (removed) {
         JOptionPane.showMessageDialog(this, "Song removed successfully: " + songName, "Success", JOptionPane.INFORMATION_MESSAGE);
         updatePlayListDisplay();
-        PlaylistSaveHelper.savePlaylistToFile(playlist); // Save changes
+        PlaylistSaveHelper.savePlaylistToFile(playlist);
     } else {
         JOptionPane.showMessageDialog(this, "Failed to remove song: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
     }
@@ -520,7 +487,6 @@ private boolean removeSongFromPlaylist(String songName) {
     Node current = playlist.head;
     while (current != null) {
         if (current.songName.equalsIgnoreCase(songName)) {
-            // Remove the node
             if (current == playlist.head) {
                 playlist.deleteBegin();
             } else if (current == playlist.tail) {
@@ -535,10 +501,8 @@ private boolean removeSongFromPlaylist(String songName) {
     }
     return false;
 }
-           // SEARCH FUNCTIONALITY 
-        private void setupSearchFunctionality() {
-    // Find the search button and add action listener
     
+    private void setupSearchFunctionality() {
     Component[] components = ((JPanel)playListJList.getParent().getParent().getComponent(0)).getComponents();
     for (Component comp : components) {
         if (comp instanceof JPanel) {
@@ -553,7 +517,7 @@ private boolean removeSongFromPlaylist(String songName) {
     }
 }
 
-        private void searchSongs() {
+    private void searchSongs() {
     String searchTerm = searchField.getText().trim();
     
     if (searchTerm.isEmpty()) {
@@ -561,7 +525,6 @@ private boolean removeSongFromPlaylist(String songName) {
         return;
     }
     
-    // Search by both song name and artist
     java.util.List<String> results = new java.util.ArrayList<>();
     Node current = playlist.head;
     
@@ -596,8 +559,6 @@ private boolean removeSongFromPlaylist(String songName) {
     }
 }
     
-
-
     private Node getNodeAtIndex(int index) {
         if (playlist == null || index < 0) return null;
     
@@ -609,14 +570,13 @@ private boolean removeSongFromPlaylist(String songName) {
             currentIndex++;
         }
     
-        return current; // This will be null if index is out of bounds
+        return current;
     }
     
     private void savePlaylist() {
         PlaylistSaveHelper.savePlaylistToFile(playlist);
     }
     
-   
     private void toggleFavorite(int index){
         Node node = getNodeAtIndex(index);
         if (node != null) {
@@ -625,6 +585,7 @@ private boolean removeSongFromPlaylist(String songName) {
             savePlaylist();
         }
     }
+    
     private void showFavorites() {
         listModel.clear();
         Node current = playlist.head;
@@ -638,9 +599,7 @@ private boolean removeSongFromPlaylist(String songName) {
         }
     }
     
-
     public static void main(String[] args) {
-        // Use this to start your application
         SwingUtilities.invokeLater(() -> new MainFrame());
     }    
 }
