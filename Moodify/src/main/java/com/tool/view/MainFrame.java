@@ -4,20 +4,13 @@
  */
 package com.tool.view;
 
-import javax.swing.*;
-import java.awt.*;
-import com.tool.model.DoublyLinkedList;
-import com.tool.model.Node;
-
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
-import com.tool.control.PlayListSorter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import com.tool.control.PlaylistSorter;
+import com.tool.model.DoublyLinkedList;
+import com.tool.model.Node;
+import java.awt.*;
+import javax.swing.*;
 
 
 
@@ -26,7 +19,7 @@ public class MainFrame extends JFrame {
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
-    private PlayListSorter playlistSorter;
+    private PlaylistSorter playlistSorter;
     
     //input feilds
     private JTextField titleTextField;
@@ -43,11 +36,13 @@ public class MainFrame extends JFrame {
     
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
+    
+    
 
 
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
-        playlistSorter = new PlayListSorter();
+        playlistSorter = new PlaylistSorter();
         initializeUI();
         updatePlayListDisplay();
     
@@ -213,6 +208,12 @@ public class MainFrame extends JFrame {
         searchPanel.add(searchField);
         JButton searchButton = new JButton("Go");
         searchPanel.add(searchButton);
+        
+        //add favorite filter button
+        JButton favoritesButton = new JButton("⭐ Favorites");
+        favoritesButton.addActionListener(e -> showFavorites());
+        searchPanel.add(favoritesButton);
+        
         panel.add(searchPanel, BorderLayout.NORTH);
         
         // search 
@@ -222,9 +223,23 @@ public class MainFrame extends JFrame {
     panel.add(searchPanel, BorderLayout.NORTH);
 
 
+
         // The main playlist display
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
+        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (e.getClickCount() == 2) { //double click
+                int index = playListJList.locationToIndex(e.getPoint());
+                if (index >= 0) {
+                    toggleFavorite(index);
+                }
+            }
+        }
+        });
+        
+        
         JScrollPane scrollPane = new JScrollPane(playListJList);
         scrollPane.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -445,6 +460,7 @@ private void addRightClickMenu() {
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem removeItem = new JMenuItem("Remove Song");
     
+
     removeItem.addActionListener(e -> removeSelectedSong());
     popupMenu.add(removeItem);
     
@@ -579,6 +595,48 @@ private boolean removeSongFromPlaylist(String songName) {
             JOptionPane.INFORMATION_MESSAGE);
     }
 }
+    
+
+
+    private Node getNodeAtIndex(int index) {
+        if (playlist == null || index < 0) return null;
+    
+        Node current = playlist.head;
+        int currentIndex = 0;
+    
+        while (current != null && currentIndex < index) {
+            current = current.nextNode;
+            currentIndex++;
+        }
+    
+        return current; // This will be null if index is out of bounds
+    }
+    
+    private void savePlaylist() {
+        PlaylistSaveHelper.savePlaylistToFile(playlist);
+    }
+    
+   
+    private void toggleFavorite(int index){
+        Node node = getNodeAtIndex(index);
+        if (node != null) {
+            node.setFavorite(!node.isFavorite());
+            updatePlayListDisplay();
+            savePlaylist();
+        }
+    }
+    private void showFavorites() {
+        listModel.clear();
+        Node current = playlist.head;
+        while (current != null){
+            if (current.isFavorite()){
+                String songInfo = "⭐ " + current.songName + " - " + current.artistName +
+                        " [ " + current.getMoodScore() + " ] ";
+                listModel.addElement(songInfo);
+            }
+            current = current.nextNode;
+        }
+    }
     
 
     public static void main(String[] args) {
