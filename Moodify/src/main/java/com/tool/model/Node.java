@@ -17,13 +17,13 @@ public class Node implements Serializable {
     private int duration; // in seconds
 
     // Updated constructor to include duration
-    public Node(String songName, String artistName, String songPath, int duration) {
+   /* public Node(String songName, String artistName, String songPath, int duration) {
         this.songName = songName;
         this.artistName = artistName;
         this.songPath = songPath;
         this.duration = duration;
         this.moodScore = 5; // assign default score
-    }
+    }*/
 
     // Updated constructor for when mood score is provided
     public Node(String songName, String artistName, String songPath, int duration, int moodScore) {
