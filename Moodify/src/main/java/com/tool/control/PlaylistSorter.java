@@ -5,7 +5,7 @@ import com.tool.model.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlayListSorter {
+public class PlaylistSorter {
    
     public void sortByMood(DoublyLinkedList currentPlaylist,String mood){
         switch(mood){

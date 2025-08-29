@@ -11,7 +11,7 @@ import com.tool.model.Node;
 
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
-import com.tool.control.PlayListSorter;
+import com.tool.control.PlaylistSorter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,7 +29,7 @@ public class MainFrame extends JFrame {
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
-    private PlayListSorter playlistSorter;
+    private PlaylistSorter playlistSorter;
     
     //input feilds
     private JTextField titleTextField;
@@ -52,7 +52,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
-        playlistSorter = new PlayListSorter();
+        playlistSorter = new PlaylistSorter();
         initializeUI();
         updatePlayListDisplay();
     
