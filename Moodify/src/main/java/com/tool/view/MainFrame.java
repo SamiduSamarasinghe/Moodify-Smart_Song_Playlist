@@ -108,6 +108,7 @@ public class MainFrame extends JFrame {
     JPanel controlPanel = createControlPanel();
     add(controlPanel, BorderLayout.SOUTH);
 
+    try{
     //vlc player  creation
         
     embeddedMediaPlayerComponent = new EmbeddedMediaPlayerComponent(); 
@@ -116,6 +117,19 @@ public class MainFrame extends JFrame {
     add(videoPanel, BorderLayout.EAST);
         
     videoPanel.setPreferredSize(new Dimension(400, 300)); 
+    }catch(Exception e){
+        JOptionPane.showMessageDialog(
+        this,
+        "VLC Media Player not found on your system.\n" +
+        "Please install VLC from https://www.videolan.org/vlc/ to enable video/audio playback.",
+        "VLC Not Found",
+        JOptionPane.ERROR_MESSAGE
+    );
+
+    // Disable playback but let the playlist manager run
+    embeddedMediaPlayerComponent = null;
+    embeddedMediaPlayer = null;
+    }
 
     // 5. Finalize and display the JFrame
     setMinimumSize(new Dimension(800, 600)); // Set minimum size
