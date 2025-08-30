@@ -90,6 +90,7 @@ public class PlaylistSorter {
         String tempArtistName = firstNode.artistName;
         int tempMoodScore = firstNode.getMoodScore();
         int tempDuratoin = firstNode.getDuration();
+        boolean tempIsFavorit = firstNode.isFavorite();
         
         
         //apply second node values to firstNode
@@ -98,6 +99,7 @@ public class PlaylistSorter {
         firstNode.artistName = secondNode.artistName;
         firstNode.setMoodScore(secondNode.getMoodScore());
         firstNode.setDuration(secondNode.getDuration());
+        firstNode.setFavorite(secondNode.isFavorite());
         
         
         //apply first node values to secondNode
@@ -106,6 +108,7 @@ public class PlaylistSorter {
         secondNode.artistName = tempArtistName;
         secondNode.setMoodScore(tempMoodScore);
         secondNode.setDuration(tempDuratoin);
+        secondNode.setFavorite(tempIsFavorit);
     }
     
     private void sortNeutral(DoublyLinkedList playList){
