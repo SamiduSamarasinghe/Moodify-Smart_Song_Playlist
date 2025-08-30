@@ -39,8 +39,6 @@ public class MainFrame extends JFrame {
     
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
-    // for smart auto play
-    private Timer autoPlayTimer;
     private Timer songDurationTimer;
     private int remainingSeconds;
     
@@ -338,7 +336,7 @@ public class MainFrame extends JFrame {
     
         //sort button
         JButton sortButton = createIconButton("^^", "Sort");
-        sortButton.addActionListener(e -> perfromMoodSort());
+        sortButton.addActionListener(e -> perfromSort());
     
         //import button
         JButton importButton = createIconButton("Import️", "Import");

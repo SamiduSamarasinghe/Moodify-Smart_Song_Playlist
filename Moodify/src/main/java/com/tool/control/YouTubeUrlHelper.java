@@ -6,6 +6,7 @@ package com.tool.control;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 
 /**
  *
@@ -15,8 +16,14 @@ public class YouTubeUrlHelper {
     
     public static String getStreamLinkFromYouTube(String youtubeUrl){
     try{
+        System.out.println("Current Working Directory: " + System.getProperty("user.dir"));
+
+
+        String yt_dl_filePath = Paths.get("src", "main", "yt_dl", "yt-dlp.exe").toString();
+        System.out.println("Resolved Path: " + yt_dl_filePath);
+
+        
         System.out.println("Getting stream link from: " + youtubeUrl);
-        String yt_dl_filePath = "C:\\my-work-space\\git-hub-repo\\Moodify-Smart_Song_Playlist\\Moodify\\src\\main\\yt_dl\\yt-dlp.exe";
 
         ProcessBuilder processBuilder = new ProcessBuilder(
             yt_dl_filePath,
