@@ -7,6 +7,7 @@ package com.tool.view;
 import com.tool.control.MoodShuffler;
 import com.tool.control.PlaylistSaveHelper;
 import com.tool.control.PlaylistSorter;
+import com.tool.control.YouTubeUrlHelper;
 import com.tool.control.RemoveSong;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
@@ -15,8 +16,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 
+//vlcj imports
+import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+
 public class MainFrame extends JFrame {
     
+    private EmbeddedMediaPlayerComponent embeddedMediaPlayerComponent;
+    private EmbeddedMediaPlayer embeddedMediaPlayer;
     private DoublyLinkedList playlist; //data model
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
@@ -34,11 +41,17 @@ public class MainFrame extends JFrame {
     
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
-    // for smart auto play
-    private Timer autoPlayTimer;
     private Timer songDurationTimer;
     private int remainingSeconds;
     
+    private boolean autoPlayEnabled = false;
+    private Timer autoPlayTimer; // for smart auto play
+    
+    private String streamUrl;
+    private long currentTime;
+    private long newTime;
+    private long totalDuration;
+
     //color types for each mood
     private static final Color CALM_COLOR = new Color(200, 230, 200);//green
     private static final Color NEUTRAL_COLOR = new Color(25, 240, 200);//yellow
@@ -66,6 +79,7 @@ public class MainFrame extends JFrame {
     }
     
     private void initializeUI() {
+
     // 1. Basic JFrame setup
     setTitle("Music Playlist Manager");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -93,6 +107,15 @@ public class MainFrame extends JFrame {
     // 4. Build the South Panel (Controls)
     JPanel controlPanel = createControlPanel();
     add(controlPanel, BorderLayout.SOUTH);
+
+    //vlc player  creation
+        
+    embeddedMediaPlayerComponent = new EmbeddedMediaPlayerComponent(); 
+    JPanel videoPanel = new JPanel(new BorderLayout());
+    videoPanel.add(embeddedMediaPlayerComponent, BorderLayout.CENTER);
+    add(videoPanel, BorderLayout.EAST);
+        
+    videoPanel.setPreferredSize(new Dimension(400, 300)); 
 
     // 5. Finalize and display the JFrame
     setMinimumSize(new Dimension(800, 600)); // Set minimum size
@@ -280,6 +303,7 @@ public class MainFrame extends JFrame {
     }
     
     private JPanel createControlPanel() {
+
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         panel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
@@ -318,7 +342,7 @@ public class MainFrame extends JFrame {
     
         //sort button
         JButton sortButton = createIconButton("^^", "Sort");
-        sortButton.addActionListener(e -> perfromMoodSort());
+        sortButton.addActionListener(e -> perfromSort());
     
         //import button
         JButton importButton = createIconButton("Import️", "Import");
@@ -416,7 +440,7 @@ public class MainFrame extends JFrame {
         PlaylistSaveHelper.savePlaylistmanual(this, playlist);
     }
     
-    private void perfromMoodSort(){
+    private void perfromSort(){
         String[] sortOptions = {"Sort By Mood","Sort By Duration"};
         
         int result = JOptionPane.showOptionDialog(
@@ -615,10 +639,31 @@ public class MainFrame extends JFrame {
         //update theme based on mood
         updateThemeBasedOnMood();
         
+        //run the getStreamLink Method on a separeate thread to avoid frezzing main GUI
+        new Thread(()->{
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
+            //
+            if(streamUrl != null){
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                
+                SwingUtilities.invokeLater(()->{
+                    JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
+                    updatePlayListDisplay();
+                });
+            }
+            else{
+                SwingUtilities.invokeLater(()->{
+                JOptionPane.showMessageDialog(this,"Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                updatePlayListDisplay();
+                });
+            }
+        }).start();
+        
         JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
         + " - " + currentNode.artistName + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + " )");
         updatePlayListDisplay();        
     }
+
     //add timer for autu-play
     private void handleSongTimerTick(){
         if (isPlaying && currentNode != null) {
@@ -633,6 +678,7 @@ public class MainFrame extends JFrame {
     
     private void pauseSong(){
         isPlaying = false;
+        embeddedMediaPlayerComponent.mediaPlayer().controls().pause();
         songDurationTimer.stop(); //stop timer when paused
         
         updateThemeBasedOnMood();
@@ -650,9 +696,7 @@ public class MainFrame extends JFrame {
                 
                 updateThemeBasedOnMood();
                 
-                JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
-                        + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ") ");                         
-                    updatePlayListDisplay();                   
+                playSong();
         }else {
             JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
             isPlaying = false;
@@ -671,9 +715,7 @@ public class MainFrame extends JFrame {
             
             updateThemeBasedOnMood();
             
-            JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
-                + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ")");
-            updatePlayListDisplay();
+            playSong();
                        
         }else{
             JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
@@ -692,21 +734,56 @@ public class MainFrame extends JFrame {
     
     private void skipForward() {
         if (currentNode != null && isPlaying) {
+            try{
             //skip 10secs
             remainingSeconds = Math.max(0, remainingSeconds - 10);
             
-            if (remainingSeconds <= 0){
+            // get teh current time stamp from media player
+            currentTime = embeddedMediaPlayerComponent.mediaPlayer().status().time();
+            newTime = currentTime + 10000;  //10s forward
+            
+            //get the total duration from the media player
+            totalDuration = embeddedMediaPlayerComponent.mediaPlayer().status().length();
+            
+            if (newTime >= totalDuration){
                 nextSong(); //if we skip past the end, then go to next song
             } else {
-                JOptionPane.showMessageDialog(this, "Skipped forward 10 seconds");
+                
+                embeddedMediaPlayerComponent.mediaPlayer().controls().setTime(newTime);
+                
+                // Update remaining seconds based on new position
+                remainingSeconds = (int) ((totalDuration - newTime) / 1000);
+                JOptionPane.showMessageDialog(this, "Skipped forward 10 seconds"); 
+            }
+            }catch(Exception e){
+                JOptionPane.showMessageDialog(this, "Error skipping forward: " 
+                        + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
     private void skipBackward(){
         if (currentNode != null && isPlaying) {
+            try{
             //skip 10 secs
+            
+            //get the current time stamp
+            currentTime = embeddedMediaPlayerComponent.mediaPlayer().status().time();
+            newTime = Math.max(0, currentTime - 10000); // 10 seconds backward, but not before 0
+            
+            embeddedMediaPlayerComponent.mediaPlayer().controls().setTime(newTime);
+            
+            // Update remaining seconds based on new position
+            long totalDuration = embeddedMediaPlayerComponent.mediaPlayer().status().length();
+            remainingSeconds = (int) ((totalDuration - newTime) / 1000);
+            
+            
             remainingSeconds = Math.min(currentNode.getDuration(), remainingSeconds + 10);
             JOptionPane.showMessageDialog(this, "Skipped backward 10 seconds");
+            
+            }catch(Exception e){
+                 JOptionPane.showMessageDialog(this, "Error skipping backward: " 
+                         + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     
