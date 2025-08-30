@@ -132,21 +132,17 @@ public class MoodShuffler {
     // Helper method to add a list of nodes to the end of the playlist
     private static void addNodeListToEnd(DoublyLinkedList playlist, List<Node> nodes) {
         for (Node node : nodes) {
-           // Node newNode = new Node(node.songName, node.artistName, node.songPath, node.getDuration(), node.getMoodScore());
+            Node newNode = new Node(node.songName, node.artistName, node.songPath, node.getDuration(), node.getMoodScore());
             
             if (playlist.tail == null) {
             // If playlist is empty, set head and tail to the new node
-            playlist.head = node;
-            playlist.tail = node;
-            //reset node's pointers
-            node.previousNode = null;
-            node.nextNode = null;
+            playlist.head = newNode;
+            playlist.tail = newNode;
         } else {
             // Add to the end of the list
-            playlist.tail.nextNode = node;
-            node.previousNode = playlist.tail;
-            node.nextNode = null;
-            playlist.tail = node;
+            playlist.tail.nextNode = newNode;
+            newNode.previousNode = playlist.tail;
+            playlist.tail = newNode;
         }
         }
     }
