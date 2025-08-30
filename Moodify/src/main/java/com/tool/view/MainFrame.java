@@ -45,13 +45,10 @@ public class MainFrame extends JFrame {
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
     
-<<<<<<< HEAD
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
     private String streamUrl;
     
-=======
->>>>>>> parent of fcf3b70 (add mood based theme color change)
     
 
 
@@ -363,24 +360,7 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
-<<<<<<< HEAD
     // Method to update the JList from the DoublyLinkedList
-=======
-    //helper method to find node by song
-    private Node findNodeBySongName(String songName){
-        if (playlist == null || playlist.head == null) return null;
-        
-        Node current = playlist.head;
-        while (current != null) {
-            if (current.songName.equalsIgnoreCase(songName)){
-                return current;
-            }
-            current = current.nextNode;
-        }
-        return null;
-    }
-    
->>>>>>> parent of fcf3b70 (add mood based theme color change)
     private void updatePlayListDisplay() {
         listModel.clear();
         if (playlist != null && playlist.head != null) {
@@ -434,7 +414,6 @@ public class MainFrame extends JFrame {
         }
         isPlaying = true;
         
-<<<<<<< HEAD
         //run the getStreamLink Method on a separeate thread to avoid frezzing main GUI
         new Thread(()->{
             streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
@@ -446,19 +425,6 @@ public class MainFrame extends JFrame {
                     JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
                     updatePlayListDisplay();
                 });
-=======
-        JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
-        + " - " + currentNode.artistName + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + " )");
-        updatePlayListDisplay();        
-    }
-    //add timer for autu-play
-    private void handleSongTimerTick(){
-        if (isPlaying && currentNode != null) {
-            remainingSeconds--;      
-        
-            if (remainingSeconds <= 0) {
-                nextSong(); // Song finished, move to next automatically
->>>>>>> parent of fcf3b70 (add mood based theme color change)
             }
             else{
                 SwingUtilities.invokeLater(()->{
@@ -473,11 +439,7 @@ public class MainFrame extends JFrame {
     //pause button
     private void pauseSong(){
         isPlaying = false;
-<<<<<<< HEAD
         embeddedMediaPlayerComponent.mediaPlayer().controls().pause();
-=======
-        songDurationTimer.stop(); //stop timer when paused
->>>>>>> parent of fcf3b70 (add mood based theme color change)
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
     
@@ -485,7 +447,6 @@ public class MainFrame extends JFrame {
     private void nextSong(){
         if (currentNode != null && currentNode.nextNode != null){
             currentNode = currentNode.nextNode;
-<<<<<<< HEAD
             JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
             updatePlayListDisplay();
             
@@ -497,16 +458,6 @@ public class MainFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Next: " + currentNode.songName);
             }
             
-=======
-                
-                //reset timer for new song
-                remainingSeconds = currentNode.getDuration();
-                songDurationTimer.restart();
-                
-                JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
-                        + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ") ");                         
-                    updatePlayListDisplay();                   
->>>>>>> parent of fcf3b70 (add mood based theme color change)
         }else {
             JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
             isPlaying = false;
@@ -518,17 +469,7 @@ public class MainFrame extends JFrame {
     private void previousSong(){
         if (currentNode != null && currentNode.previousNode != null){
             currentNode = currentNode.previousNode;
-<<<<<<< HEAD
             JOptionPane.showMessageDialog(this, "Previous: " + currentNode.songName);
-=======
-            
-            //reset timer for the previous song
-            remainingSeconds = currentNode.getDuration();
-            songDurationTimer.restart();
-            
-            JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName
-                + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + ")");
->>>>>>> parent of fcf3b70 (add mood based theme color change)
             updatePlayListDisplay();
             
             if (autoPlayEnabled) {
