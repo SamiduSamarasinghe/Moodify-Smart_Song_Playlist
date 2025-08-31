@@ -24,6 +24,9 @@ public class MainFrame extends JFrame {
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
     private PlaylistSorter playlistSorter;
+
+    //buttons
+    private JButton favoritesButton;
     
     //input feilds
     private JTextField titleTextField;
@@ -41,6 +44,7 @@ public class MainFrame extends JFrame {
     private boolean isPlaying = false; //to track play, pause 
     private Timer songDurationTimer;
     private int remainingSeconds;
+    private boolean showingFavorites = false;
     
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
@@ -345,7 +349,7 @@ public class MainFrame extends JFrame {
 
     return panel;
     }
-    
+
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -355,20 +359,24 @@ public class MainFrame extends JFrame {
         searchPanel.add(searchField);
         JButton searchButton = new JButton("Go");
         searchPanel.add(searchButton);
-        
-        JButton favoritesButton = new JButton("⭐ Favorites");
+
+        // Store reference to favorites button
+        favoritesButton = new JButton("⭐ Favorites");
         favoritesButton.addActionListener(e -> showFavorites());
         searchPanel.add(favoritesButton);
-        
+
         panel.add(searchPanel, BorderLayout.NORTH);
-        
+
         searchButton.addActionListener(e -> searchSongs());
         searchPanel.add(searchButton);
         panel.add(searchPanel, BorderLayout.NORTH);
 
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
-        
+
+        // Remove the complex listener and use a simpler approach
+        // The button text will be updated when needed, not on every list change
+
         playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -376,29 +384,16 @@ public class MainFrame extends JFrame {
                     int index = playListJList.locationToIndex(e.getPoint());
                     if (index >= 0){
                         playSelectedSong(index);
-                    }       
+                    }
                 }else if (e.getClickCount() == 2){ //double click for make song as favorite
                     int index = playListJList.locationToIndex(e.getPoint());
-
                     if (index >= 0){
                         toggleFavorite(index);
                     }
                 }
+            }
+        });
 
-            }
-        });
-        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int index = playListJList.locationToIndex(e.getPoint());
-                    if (index >= 0) {
-                        toggleFavorite(index);
-                    }
-                }
-            }
-        });
-        
         JScrollPane scrollPane = new JScrollPane(playListJList);
         scrollPane.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -825,38 +820,68 @@ public class MainFrame extends JFrame {
         }
         return null;
     }
-    
+
     private void updatePlayListDisplay() {
+        // Store whether we're currently in favorites view
+        boolean wasInFavoritesView = isInFavoritesView();
+
         listModel.clear();
+
         if (playlist != null && playlist.head != null) {
             Node current = playlist.head;
             int index = 0;
+
             while (current != null) {
-                String songInfo = current.songName + " - " + current.artistName + 
-                        " [ " + current.getMoodScore() + " ] "+ " - "
-                        + playlistSorter.formatDuration(current.getDuration());
-                
-                if (current == currentNode && isPlaying){
-                    songInfo = "▶ " + songInfo;
+                // Only show favorite songs if we were in favorites view
+                if (!wasInFavoritesView || current.isFavorite()) {
+                    String songInfo = current.songName + " - " + current.artistName +
+                            " [ " + current.getMoodScore() + " ] " + " - "
+                            + playlistSorter.formatDuration(current.getDuration());
+
+                    if (current == currentNode && isPlaying) {
+                        songInfo = "▶ " + songInfo;
+                    }
+                    // Add favorite star
+                    if (current.isFavorite()) {
+                        songInfo = "⭐ " + songInfo;
+                    }
+
+                    listModel.addElement(songInfo);
                 }
-                //add favorite star
-                if (current.isFavorite()){
-                    songInfo = "⭐ " + songInfo;
-                }
-                
-                listModel.addElement(songInfo);
                 current = current.nextNode;
                 index++;
             }
-            //highlight current playing song in playlist
-            if (currentNode != null){
-                int currentIndex = getIndexOfNode(currentNode);
-                if(currentIndex >= 0){
+
+            // Highlight current playing song in playlist
+            if (currentNode != null) {
+                int currentIndex = getIndexOfNodeInDisplay(currentNode, wasInFavoritesView);
+                if (currentIndex >= 0) {
                     playListJList.setSelectedIndex(currentIndex);
                     playListJList.ensureIndexIsVisible(currentIndex);
                 }
             }
         }
+    }
+
+    // Helper method to get index of node in the current display view
+    private int getIndexOfNodeInDisplay(Node targetNode, boolean favoritesOnly) {
+        if (playlist == null || playlist.head == null || targetNode == null) return -1;
+
+        Node current = playlist.head;
+        int displayIndex = 0;
+
+        while (current != null) {
+            // Only count nodes that should be displayed
+            if (!favoritesOnly || current.isFavorite()) {
+                if (current == targetNode) {
+                    return displayIndex;
+                }
+                displayIndex++;
+            }
+            current = current.nextNode;
+        }
+
+        return -1;
     }
     //helper method for get index of node
     private int getIndexOfNode(Node targetNode) {
@@ -896,44 +921,8 @@ public class MainFrame extends JFrame {
         return MoodShuffler.INTENSITY_MEDIUM;
     }
     //play song method
-    private void playSong(){
-        if (playlist == null || playlist.head == null){
-            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if(currentNode == null){
-            currentNode = playlist.head;
-        }
-        isPlaying = true;
-        //start duration timer
-        remainingSeconds = currentNode.getDuration();
-        songDurationTimer.start();
-        
-        //update theme based on mood
-        updateThemeBasedOnMood();
-        
-        //run the getStreamLink Method on a separeate thread to avoid frezzing main GUI
-        new Thread(()->{
-            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
-            //
-            if(streamUrl != null){
-                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
-                
-                SwingUtilities.invokeLater(()->{
-                    AutoClosingDialog.show(this,"Now Playing: " + currentNode.songName + " - " + currentNode.artistName,"Message",1,2000);
-                    updatePlayListDisplay();
-                });
-            }
-            else{
-                SwingUtilities.invokeLater(()->{
-                JOptionPane.showMessageDialog(this,"Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
-                updatePlayListDisplay();
-                });
-            }
-        }).start();
-        
-        AutoClosingDialog.show(this,"Fetching your song... just a moment!","Message",1,5000);
-        updatePlayListDisplay();        
+    private void playSong() {
+        playSongWithoutChangingView();
     }
 
     //add timer for autu-play
@@ -957,53 +946,118 @@ public class MainFrame extends JFrame {
         
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
-    
-    private void nextSong(){
-        if (currentNode != null && currentNode.nextNode != null){
-            currentNode = currentNode.nextNode;
-                
-                //reset timer for new song
-                remainingSeconds = currentNode.getDuration();
-                songDurationTimer.restart();
-                
+
+    private void nextSong() {
+        if (currentNode != null) {
+            Node nextNode;
+
+            if (showingFavorites) {
+                // In favorites view - find next favorite song
+                nextNode = findNextFavoriteNode(currentNode);
+            } else {
+                // In normal view - use regular next node
+                nextNode = currentNode.nextNode;
+            }
+
+            if (nextNode != null) {
+                currentNode = nextNode;
+                resetTimerForCurrentSong();
                 updateThemeBasedOnMood();
-                
-                playSong();
-        }else {
-            JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
-            isPlaying = false;
-            songDurationTimer.stop(); //stop timer when no more songs
-            updatePlayListDisplay();
+                playSongWithoutChangingView(); // Use new method that doesn't change view
+            } else {
+                JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
+                isPlaying = false;
+                songDurationTimer.stop();
+                updatePlayListDisplay();
+            }
         }
     }
-    
-    private void previousSong(){
-        if (currentNode != null && currentNode.previousNode != null){
-            currentNode = currentNode.previousNode;
-            
-            //reset timer for the previous song
-            remainingSeconds = currentNode.getDuration();
+
+    private void previousSong() {
+        if (currentNode != null) {
+            Node previousNode;
+
+            if (showingFavorites) {
+                // In favorites view - find previous favorite song
+                previousNode = findPreviousFavoriteNode(currentNode);
+            } else {
+                // In normal view - use regular previous node
+                previousNode = currentNode.previousNode;
+            }
+
+            if (previousNode != null) {
+                currentNode = previousNode;
+                resetTimerForCurrentSong();
+                updateThemeBasedOnMood();
+                playSongWithoutChangingView(); // Use new method that doesn't change view
+            } else {
+                JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    // Helper method to find first favorite node
+    private Node findFirstFavoriteNode() {
+        if (playlist == null || playlist.head == null) return null;
+
+        Node current = playlist.head;
+        while (current != null) {
+            if (current.isFavorite()) {
+                return current;
+            }
+            current = current.nextNode;
+        }
+        return null;
+    }
+
+    // Helper method to find next favorite node
+    private Node findNextFavoriteNode(Node startNode) {
+        if (playlist == null || startNode == null) return null;
+
+        Node current = startNode.nextNode;
+        while (current != null) {
+            if (current.isFavorite()) {
+                return current;
+            }
+            current = current.nextNode;
+        }
+        return null;
+    }
+
+    // Helper method to find previous favorite node
+    private Node findPreviousFavoriteNode(Node startNode) {
+        if (playlist == null || startNode == null) return null;
+
+        Node current = startNode.previousNode;
+        while (current != null) {
+            if (current.isFavorite()) {
+                return current;
+            }
+            current = current.previousNode;
+        }
+        return null;
+    }
+
+    // Helper method to reset timer for current song
+    private void resetTimerForCurrentSong() {
+        remainingSeconds = currentNode.getDuration();
+        if (songDurationTimer != null) {
             songDurationTimer.restart();
-            
-            updateThemeBasedOnMood();
-            
-            playSong();
-                       
-        }else{
-            JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
-    
-    private void clearPlaylist(){
-        if (playlist != null){
+
+    private void clearPlaylist() {
+        if (playlist != null) {
             playlist.clear();
             currentNode = null;
             isPlaying = false;
+            showingFavorites = false; // Exit favorites view
             updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
-    
+
+
     private void skipForward() {
         if (currentNode != null && isPlaying) {
             try{
@@ -1261,11 +1315,18 @@ public class MainFrame extends JFrame {
     }
 
     private void showFavorites() {
+        if (showingFavorites) {
+            // If already in favorites view, return to normal view
+            exitFavoritesView();
+            return;
+        }
+
         if (playlist == null || playlist.head == null) {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
+        showingFavorites = true;
         listModel.clear();
         Node current = playlist.head;
         boolean hasFavorites = false;
@@ -1294,6 +1355,7 @@ public class MainFrame extends JFrame {
                     "No favorite songs found!\nRight-click on a song and select 'Add to Favorites'.",
                     "No Favorites",
                     JOptionPane.INFORMATION_MESSAGE);
+            showingFavorites = false;
             updatePlayListDisplay(); // Return to normal view
         } else {
             // Highlight current playing song if it's a favorite
@@ -1305,9 +1367,16 @@ public class MainFrame extends JFrame {
                 }
             }
         }
+
+        updateFavoritesButtonText(); // Update the button text when entering favorites view
     }
+    private void exitFavoritesView() {
+        showingFavorites = false;
+        updatePlayListDisplay();
+    }
+    // Helper method to get index of a favorite node in the favorites view
     private int getIndexOfFavoriteNode(Node targetNode) {
-        if (playlist == null || playlist.head == null || targetNode == null) return -1;
+        if (playlist == null || playlist.head == null || targetNode == null || !targetNode.isFavorite()) return -1;
 
         Node current = playlist.head;
         int index = 0;
@@ -1324,16 +1393,7 @@ public class MainFrame extends JFrame {
         return -1;
     }
     private boolean isInFavoritesView() {
-        // Check if all visible items have the favorite star
-        if (listModel.size() == 0) return false;
-
-        for (int i = 0; i < listModel.size(); i++) {
-            String item = listModel.getElementAt(i);
-            if (!item.startsWith("⭐")) {
-                return false;
-            }
-        }
-        return true;
+        return showingFavorites;
     }
     private Node getFavoriteNodeAtIndex(int index) {
         if (playlist == null || index < 0) return null;
@@ -1352,17 +1412,85 @@ public class MainFrame extends JFrame {
         }
         return null;
     }
+    // New method that plays song without changing the view
+    private void playSongWithoutChangingView() {
+        if (playlist == null || playlist.head == null) {
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Check if we're in favorites view and current node is no longer a favorite
+        if (showingFavorites && (currentNode == null || !currentNode.isFavorite())) {
+            // Find the first favorite song
+            currentNode = findFirstFavoriteNode();
+            if (currentNode == null) {
+                JOptionPane.showMessageDialog(this, "No favorite songs available!", "Error", JOptionPane.WARNING_MESSAGE);
+                showingFavorites = false;
+                updatePlayListDisplay();
+                return;
+            }
+        }
+
+        if (currentNode == null) {
+            currentNode = playlist.head;
+        }
+
+        isPlaying = true;
+        remainingSeconds = currentNode.getDuration();
+        if (songDurationTimer != null) {
+            songDurationTimer.start();
+        }
+
+        updateThemeBasedOnMood();
+
+        new Thread(() -> {
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
+
+            if (streamUrl != null) {
+                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
+                    embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
+                }
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                SwingUtilities.invokeLater(() -> {
+                    AutoClosingDialog.show(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName, "Message", 1, 2000);
+                    // Update display without changing view mode
+                    updatePlayListDisplay();
+                });
+            } else {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                    updatePlayListDisplay();
+                });
+            }
+        }).start();
+
+        AutoClosingDialog.show(this, "Fetching your song... just a moment!", "Message", 1, 5000);
+        updatePlayListDisplay();
+    }
+
+    private void updateFavoritesButtonText() {
+        if (favoritesButton != null) {
+            if (showingFavorites) {
+                favoritesButton.setText("📋 All Songs");
+                favoritesButton.setToolTipText("Click to show all songs");
+            } else {
+                favoritesButton.setText("⭐ Favorites");
+                favoritesButton.setToolTipText("Click to show favorite songs only");
+            }
+        }
+    }
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainFrame());
-    }    
-    
+    }
+
     private void importPlaylistManual() {
         DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
         if (importedPlaylist != null && importedPlaylist.head != null) {
             this.playlist = importedPlaylist;
             currentNode = null;
             isPlaying = false;
+            showingFavorites = false; // Exit favorites view
             updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
         }
