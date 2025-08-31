@@ -47,10 +47,12 @@ public class MainFrame extends JFrame {
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
     
+    
+    
     private String streamUrl;
     private long currentTime;
     private long newTime;
-    private long totalDuration;
+    private long totalDuration;   
 
     //color types for each mood
     private static final Color CALM_COLOR = new Color(200, 230, 200);//green
@@ -324,6 +326,9 @@ public class MainFrame extends JFrame {
             "Playlist Controls"
         ));
         panel.setBackground(new Color(250, 250, 250));
+        
+        //volume control
+        JPanel volumePanel = createVolumeControl();
     
         //previous button
         JButton prevButton = createIconButton("<-", "Previous");
@@ -371,6 +376,7 @@ public class MainFrame extends JFrame {
         clearButton.addActionListener(e -> clearPlaylist());
     
         //add buttons to panel in order
+        panel.add(volumePanel);
         panel.add(shuffleButton);
         panel.add(new JSeparator(SwingConstants.VERTICAL));
         panel.add(skipBackButton);
@@ -388,6 +394,53 @@ public class MainFrame extends JFrame {
     
         return panel;
     }
+    
+    //add vloume slider function
+    private JPanel createVolumeControl() {
+        JPanel volumePanel = new JPanel(new BorderLayout(5, 0));
+        volumePanel.setOpaque(false);
+
+        //volume icon
+        JLabel volumeIcon = new JLabel("🔊");
+        volumeIcon.setToolTipText("Volume");
+        volumePanel.add(volumeIcon, BorderLayout.WEST);
+
+        //volume slider
+        JSlider volumeSlider = new JSlider(0, 100, 50);
+        volumeSlider.setPreferredSize(new Dimension(60, 20));
+        volumeSlider.setOpaque(false);
+        volumeSlider.setToolTipText("Adjust volume");
+
+        //set initial volume
+        if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
+            embeddedMediaPlayerComponent.mediaPlayer().audio().setVolume(50);
+        }
+
+        // Add change listener
+        volumeSlider.addChangeListener(e -> {
+            if (!volumeSlider.getValueIsAdjusting() && embeddedMediaPlayerComponent != null && 
+                embeddedMediaPlayerComponent.mediaPlayer() != null) {
+                int volume = volumeSlider.getValue();
+                embeddedMediaPlayerComponent.mediaPlayer().audio().setVolume(volume);
+
+                // Update icon based on volume level
+                if (volume == 0) {
+                    volumeIcon.setText("🔇");
+                } else if (volume < 30) {
+                    volumeIcon.setText("🔈");
+                } else if (volume < 70) {
+                    volumeIcon.setText("🔉");
+                } else {
+                    volumeIcon.setText("🔊");
+                }
+            }
+        });
+
+        volumePanel.add(volumeSlider, BorderLayout.CENTER);
+
+        return volumePanel;
+    }
+    
     //helper method to create icon button
     private JButton createIconButton(String text, String tooltip) {
         JButton button = new JButton(text);
