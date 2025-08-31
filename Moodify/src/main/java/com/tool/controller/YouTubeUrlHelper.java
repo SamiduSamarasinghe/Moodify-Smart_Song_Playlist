@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.tool.control;
+package com.tool.controller;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -19,7 +19,7 @@ public class YouTubeUrlHelper {
         System.out.println("Current Working Directory: " + System.getProperty("user.dir"));
 
 
-        String yt_dl_filePath = Paths.get("src", "main", "yt_dl", "yt-dlp.exe").toString();
+        String yt_dl_filePath = Paths.get("src", "main", "resources", "yt-dlp.exe").toString();
         System.out.println("Resolved Path: " + yt_dl_filePath);
 
         
