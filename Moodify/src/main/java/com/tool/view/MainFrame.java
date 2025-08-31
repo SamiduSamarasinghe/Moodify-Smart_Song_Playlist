@@ -292,23 +292,41 @@ public class MainFrame extends JFrame {
         
         panel.add(searchPanel, BorderLayout.NORTH);
         
-    searchButton.addActionListener(e -> searchSongs());
-    
-    searchPanel.add(searchButton);
-    panel.add(searchPanel, BorderLayout.NORTH);
+        searchButton.addActionListener(e -> searchSongs());
+        searchPanel.add(searchButton);
+        panel.add(searchPanel, BorderLayout.NORTH);
 
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
+        
         playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
-        @Override
-        public void mouseClicked(java.awt.event.MouseEvent e) {
-            if (e.getClickCount() == 2) {
-                int index = playListJList.locationToIndex(e.getPoint());
-                if (index >= 0) {
-                    toggleFavorite(index);
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if(e.getClickCount() == 1){ //single click for song play
+                    int index = playListJList.locationToIndex(e.getPoint());
+                    if (index >= 0){
+                        playSelectedSong(index);
+                    }       
+                }else if (e.getClickCount() == 2){ //double click for make song as favorite
+                    int index = playListJList.locationToIndex(e.getPoint());
+
+                    if (index >= 0){
+                        toggleFavorite(index);
+                    }
+                }
+
+            }
+        });
+        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = playListJList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        toggleFavorite(index);
+                    }
                 }
             }
-        }
         });
         
         JScrollPane scrollPane = new JScrollPane(playListJList);
@@ -317,6 +335,54 @@ public class MainFrame extends JFrame {
 
         return panel;
     }
+    //add new method for play selected song
+    private void playSelectedSong(int index){
+        if(playlist == null || playlist.head == null){
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        //get node at the selected index
+        Node selectedNode = getNodeAtIndex(index);
+        if(selectedNode == null){
+            JOptionPane.showMessageDialog(this, "Could not find the selected song", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        //set as current node and play
+        currentNode = selectedNode;
+        isPlaying = true;
+        
+        //reset timer for the new song
+        remainingSeconds = currentNode.getDuration();
+        if(songDurationTimer != null){
+            songDurationTimer.restart();
+        }
+        updateThemeBasedOnMood();
+        
+        //play the song
+        new Thread(() -> {
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
+            
+            if (streamUrl != null) {
+                //stop current playing song
+                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null){
+                    embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
+                }
+                //play the new song
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
+                    updatePlayListDisplay();
+                });
+            } else { 
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                    updatePlayListDisplay();
+                });
+            }
+        }).start();
+        updatePlayListDisplay();
+    }
+    
     
     private JPanel createControlPanel() {
 
