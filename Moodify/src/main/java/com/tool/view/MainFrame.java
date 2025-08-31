@@ -809,24 +809,49 @@ public class MainFrame extends JFrame {
     }
     
     private void performMoodShuffle() {
-        if (playlist != null && playlist.head != null) {
-            //store the current song name before shuffling
-            String currentSongName = (currentNode != null) ? currentNode.songName : null;
-            
-            int intensity = chooseShuffleIntensity();
-            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, intensity);
-
-            //restore the currentNode after shuffling
-            if (currentSongName != null){
-                currentNode = playlist.findNodeBySongName(currentSongName);
-            }
-            
-            updatePlayListDisplay();
-            JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
-        } else {
-            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+    if (playlist != null && playlist.head != null) {
+        // First, let user select target mood
+        String[] moodOptions = {"Calm", "Neutral", "Energetic"};
+        String selectedMood = (String) JOptionPane.showInputDialog(
+            this,
+            "Select target mood for shuffling:",
+            "Mood Selection",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            moodOptions,
+            moodOptions[0]
+        );
+        
+        if (selectedMood == null) return; // User cancelled
+        
+        // Convert string selection to mood constant
+        int targetMood;
+        switch(selectedMood) {
+            case "Calm": targetMood = MoodShuffler.MOOD_CALM; break;
+            case "Neutral": targetMood = MoodShuffler.MOOD_NEUTRAL; break;
+            case "Energetic": targetMood = MoodShuffler.MOOD_ENERGETIC; break;
+            default: targetMood = MoodShuffler.MOOD_CALM;
         }
+        
+        int intensity = chooseShuffleIntensity();
+        
+        // Store current song before shuffling
+        String currentSongName = (currentNode != null) ? currentNode.songName : null;
+        
+        // Pass the SELECTED target mood instead of hardcoded CALM
+        MoodShuffler.moodBasedShuffle(playlist, targetMood, intensity);
+        
+        // Restore current node after shuffling
+        if (currentSongName != null) {
+            currentNode = playlist.findNodeBySongName(currentSongName);
+        }
+        
+        updatePlayListDisplay();
+        JOptionPane.showMessageDialog(this, "Playlist shuffled! Priority: " + selectedMood);
+    } else {
+        JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
     }
+}
     //update theme based on mood
     private void updateThemeBasedOnMood(){
         Color[] targetColors;

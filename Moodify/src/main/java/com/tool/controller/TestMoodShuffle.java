@@ -1,4 +1,4 @@
-package com.tool.controller;
+/*package com.tool.controller;
 
 import com.tool.model.DoublyLinkedList;
 
@@ -30,3 +30,4 @@ public class TestMoodShuffle {
         myPlaylist.printForward();
     }
 }
+*/
