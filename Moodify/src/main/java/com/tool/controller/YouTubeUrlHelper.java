@@ -52,6 +52,9 @@ public class YouTubeUrlHelper {
             if (line.startsWith("http")) {
                 streamUrl = line;
             }
+            else if(line.startsWith("https")){
+                streamUrl = line;
+            }
         }
 
         int exitCode = process.waitFor();
