@@ -1,4 +1,4 @@
-package com.tool.control;
+package com.tool.controller;
 
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;

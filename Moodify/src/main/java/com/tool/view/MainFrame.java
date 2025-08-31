@@ -4,11 +4,12 @@
  */
 package com.tool.view;
 
-import com.tool.control.MoodShuffler;
-import com.tool.control.PlaylistSaveHelper;
-import com.tool.control.PlaylistSorter;
-import com.tool.control.YouTubeUrlHelper;
-import com.tool.control.RemoveSong;
+import com.tool.controller.AutoClosingDialog;
+import com.tool.controller.MoodShuffler;
+import com.tool.controller.PlaylistSaveHelper;
+import com.tool.controller.PlaylistSorter;
+import com.tool.controller.YouTubeUrlHelper;
+import com.tool.controller.RemoveSong;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
@@ -39,6 +40,8 @@ public class MainFrame extends JFrame {
     private JTextField urlTextField;
     private JComboBox<String> moodDropdown;
     
+    private JSlider songProgress;
+    private Label songLegnth;
     private Node currentNode; //to track the currently playing song
     private boolean isPlaying = false; //to track play, pause 
     private Timer songDurationTimer;
@@ -108,6 +111,8 @@ public class MainFrame extends JFrame {
     
     // 4. Build the South Panel (Controls)
     JPanel controlPanel = createControlPanel();
+    songProgress = new JSlider(0, 1000); //to show song progress
+    controlPanel.add(songProgress, BorderLayout.CENTER);
     add(controlPanel, BorderLayout.SOUTH);
 
     try{
@@ -117,9 +122,34 @@ public class MainFrame extends JFrame {
     JPanel videoPanel = new JPanel(new BorderLayout());
     videoPanel.add(embeddedMediaPlayerComponent, BorderLayout.CENTER);
     add(videoPanel, BorderLayout.EAST);
+    
+    //update the JSliderPosition depending on songs current position using the Timer
+        songDurationTimer = new Timer(500, e -> {
+            if (embeddedMediaPlayerComponent != null &&
+                embeddedMediaPlayerComponent.mediaPlayer().status().isPlaying()) {
+                
+                float position = embeddedMediaPlayerComponent.mediaPlayer().status().position();
+                int sliderValue = (int) (position * 1000);
+                songProgress.setValue(sliderValue);
+            }
+        });
+        songDurationTimer.start();
+
+    //event to allow the user to go through the song using the JSlider
+        songProgress.addChangeListener(e -> {
+            if (songProgress.getValueIsAdjusting() && embeddedMediaPlayerComponent != null) {
+                float newPos = songProgress.getValue() / 1000f;
+                embeddedMediaPlayerComponent.mediaPlayer().controls().setPosition(newPos);
+            }
+        });
+    
+    
         
     videoPanel.setPreferredSize(new Dimension(400, 300)); 
+    
+    //this execption mostly happen if the user don't have VLC player not installed on pc
     }catch(Exception e){
+        System.out.println(e.getMessage());
         JOptionPane.showMessageDialog(
         this,
         "VLC Media Player not found on your system.\n" +
@@ -812,7 +842,7 @@ public class MainFrame extends JFrame {
                 embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
                 
                 SwingUtilities.invokeLater(()->{
-                    JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
+                    AutoClosingDialog.show(this,"Now Playing: " + currentNode.songName + " - " + currentNode.artistName,"Message",1,2000);
                     updatePlayListDisplay();
                 });
             }
@@ -824,8 +854,7 @@ public class MainFrame extends JFrame {
             }
         }).start();
         
-        JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName
-        + " - " + currentNode.artistName + " (" + playlistSorter.formatDuration(currentNode.getDuration()) + " )");
+        AutoClosingDialog.show(this,"Fetching your song... just a moment!","Message",1,5000);
         updatePlayListDisplay();        
     }
 
@@ -918,7 +947,7 @@ public class MainFrame extends JFrame {
                 
                 // Update remaining seconds based on new position
                 remainingSeconds = (int) ((totalDuration - newTime) / 1000);
-                JOptionPane.showMessageDialog(this, "Skipped forward 10 seconds"); 
+                AutoClosingDialog.show(this, "Skipped forward 10 seconds", "Message", 1, 1000);
             }
             }catch(Exception e){
                 JOptionPane.showMessageDialog(this, "Error skipping forward: " 
@@ -943,7 +972,7 @@ public class MainFrame extends JFrame {
             
             
             remainingSeconds = Math.min(currentNode.getDuration(), remainingSeconds + 10);
-            JOptionPane.showMessageDialog(this, "Skipped backward 10 seconds");
+            AutoClosingDialog.show(this, "Skipped backward 10 seconds", "Message", 1, 1000);
             
             }catch(Exception e){
                  JOptionPane.showMessageDialog(this, "Error skipping backward: " 
