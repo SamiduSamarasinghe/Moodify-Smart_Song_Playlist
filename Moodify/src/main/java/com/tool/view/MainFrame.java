@@ -120,12 +120,6 @@ public class MainFrame extends JFrame {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLayout(new BorderLayout(10, 10));
 
-        // 1. Basic JFrame setup
-        setTitle("Moodify Playlist Manager");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        //set modern dark theme
-        setLayout(new BorderLayout(10, 10));
     
         // Set modern look and feel
         try {
@@ -1165,40 +1159,45 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Failed to update favorite status: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-            // remove select  song 
-              
-      private void removeSelectedSong() {
-                    int selectedIndex = playListJList.getSelectedIndex();
-               if (selectedIndex == -1) {
-              JOptionPane.showMessageDialog(this, "Please select a song to remove!", "Error", JOptionPane.WARNING_MESSAGE);
-               return;
+    private void removeSelectedSong() {
+    int selectedIndex = playListJList.getSelectedIndex();
+    if (selectedIndex == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a song to remove!", "Error", JOptionPane.WARNING_MESSAGE);
+        return;
     }
-    
-                // Get song name from display
-    
+
+    // Get song name from display
     String selectedValue = playListJList.getSelectedValue();
+    
+    // Remove all possible prefixes from the display text
     String songName = selectedValue.split(" - ")[0].trim();
     
-                // Show confirmation dialog
-    
+    // Remove playing indicator if present
+    if (songName.startsWith("▶ ")) {
+        songName = songName.substring(2);
+    }
+    // Remove favorite indicator if present
+    if (songName.startsWith("⭐ ")) {
+        songName = songName.substring(2);
+    }
+
+    // Show confirmation dialog
     int confirm = JOptionPane.showConfirmDialog(this, 
         "Are you sure you want to remove this song?\n\n" +
         "Song: " + songName + "\n" +
-        "Note.Song will be removed from playlist",
+        "Note: Song will be removed from playlist",
         "Confirm Remove Song",
         JOptionPane.YES_NO_OPTION,
         JOptionPane.WARNING_MESSAGE);
-    
+
     if (confirm != JOptionPane.YES_OPTION) {
         return;
     }
-    
 
-                //Use RemoveSong controller to remove
-     
-          RemoveSong removeController = new RemoveSong(playlist);
-        boolean removed = removeController.removeSongFromPlaylist(songName);
-    
+    // Use RemoveSong controller to remove
+    RemoveSong removeController = new RemoveSong(playlist);
+    boolean removed = removeController.removeSongFromPlaylist(songName);
+
     if (removed) {
         JOptionPane.showMessageDialog(this, "Song removed successfully: " + songName, "Success", JOptionPane.INFORMATION_MESSAGE);
         updatePlayListDisplay();
@@ -1206,7 +1205,8 @@ public class MainFrame extends JFrame {
     } else {
         JOptionPane.showMessageDialog(this, "Failed to remove song: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
     }
-} 
+}
+     
     // Find the search button and add action listener
     
     private void setupSearchFunctionality() {
