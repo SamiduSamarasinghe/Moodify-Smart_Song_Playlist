@@ -50,24 +50,59 @@ public class MainFrame extends JFrame {
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
     
-    
-    
     private String streamUrl;
     private long currentTime;
     private long newTime;
-    private long totalDuration;   
+    private long totalDuration;  
+    
+    //color types for each mood (5 shades each)
+    private static final Color[] CALM_COLORS = {
+        new Color(230, 255, 230),    // Very light green
+        new Color(200, 240, 200),    // Light green
+        new Color(170, 225, 170),    // Medium light green
+        new Color(140, 210, 140),    // Medium green
+        new Color(110, 190, 110)     // Dark green
+    };
 
-    //color types for each mood
-    private static final Color CALM_COLOR = new Color(200, 230, 200);//green
-    private static final Color NEUTRAL_COLOR = new Color(25, 240, 200);//yellow
-    private static final  Color ENERGETIC_COLOR = new Color(255, 200, 200); //red
-    private static final Color DEFAULT_COLOR = new Color(140, 240, 240);//gray
+    private static final Color[] NEUTRAL_COLORS = {
+        new Color(255, 250, 200),    // Very light yellow
+        new Color(255, 240, 180),    // Light yellow
+        new Color(255, 230, 150),    // Medium light yellow
+        new Color(255, 220, 120),    // Medium yellow
+        new Color(255, 210, 90)      // Dark yellow
+    };
+
+    private static final Color[] ENERGETIC_COLORS = {
+        new Color(255, 220, 220),    // Very light red
+        new Color(255, 200, 200),    // Light red
+        new Color(255, 180, 180),    // Medium light red
+        new Color(255, 160, 160),    // Medium red
+        new Color(255, 140, 140)     // Dark red
+    };
+
+    private static final Color[] DEFAULT_COLORS = {
+        new Color(240, 240, 255),    // Very light blue
+        new Color(220, 220, 240),    // Light blue
+        new Color(200, 200, 220),    // Medium light blue
+        new Color(180, 180, 200),    // Medium blue
+        new Color(160, 160, 180)     // Dark blue
+    };
+    private Timer colorTransitionTimer;
+    private Color currentBackgroundColor;
+    private Color targetBackgroundColor;
+    private int currentColorIndex = 0;
+    private int transitionStep = 0;
+    private final int TRANSITION_STEPS = 30; //smoothness of transition
+    private final int TRANSITION_DELAY = 50; //ms between steps
+
     
     
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
         playlistSorter = new PlaylistSorter();
         initializeUI();
+        initializeColorTransition();
+        startMoodColorCycling();
         updatePlayListDisplay();
         
         //initialize the song duration timer
@@ -89,11 +124,18 @@ public class MainFrame extends JFrame {
     setTitle("Music Playlist Manager");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLayout(new BorderLayout(10, 10));
+
+        // 1. Basic JFrame setup
+        setTitle("Moodify Playlist Manager");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        //set modern dark theme
+        setLayout(new BorderLayout(10, 10));
     
-    // Set modern look and feel
-    try {
+        // Set modern look and feel
+        try {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    } catch (Exception e) {
+            } catch (Exception e) {
         e.printStackTrace();
     }
     
@@ -101,16 +143,19 @@ public class MainFrame extends JFrame {
 
     // 2. Build the North Panel (Input Form)
     JPanel inputPanel = createInputPanel();
+    inputPanel.setName("inputPanel");
     add(inputPanel, BorderLayout.NORTH);
 
     // 3. Build the Center Panel (Playlist View)
     JPanel centerPanel = createCenterPanel();
+    centerPanel.setName("centerPanel");
     add(centerPanel, BorderLayout.CENTER);
     addRightClickMenu();
   
     
     // 4. Build the South Panel (Controls)
     JPanel controlPanel = createControlPanel();
+    controlPanel.setName("controlPanel");
     songProgress = new JSlider(0, 1000); //to show song progress
     controlPanel.add(songProgress, BorderLayout.CENTER);
     add(controlPanel, BorderLayout.SOUTH);
@@ -415,13 +460,14 @@ public class MainFrame extends JFrame {
     
     
     private JPanel createControlPanel() {
-
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panel.setName("controlPanel");
         panel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
             "Playlist Controls"
         ));
-        panel.setBackground(new Color(250, 250, 250));
+        panel.setOpaque(true); // Ensure panel is opaque
+        panel.setBackground(new Color(250, 250, 250, 230)); // Semi-transparent white
         
         //volume control
         JPanel volumePanel = createVolumeControl();
@@ -656,84 +702,113 @@ public class MainFrame extends JFrame {
     }
     //update theme based on mood
     private void updateThemeBasedOnMood(){
-        Color themeColor = DEFAULT_COLOR;
-        
-        if (currentNode != null && isPlaying){
-            switch(currentNode.getMoodScore()){
+        Color[] targetColors;
+    
+        if (currentNode != null && isPlaying) {
+            switch(currentNode.getMoodScore()) {
                 case 1: 
-                    themeColor = CALM_COLOR;
+                    targetColors = CALM_COLORS;
                     break;
                 case 2: 
-                    themeColor = NEUTRAL_COLOR;
+                    targetColors = NEUTRAL_COLORS;
                     break;
                 case 3: 
-                    themeColor = ENERGETIC_COLOR;
+                    targetColors = ENERGETIC_COLORS;
                     break;
                 default:
-                    themeColor = DEFAULT_COLOR;
+                    targetColors = DEFAULT_COLORS;
             }
+        } else {
+            targetColors = DEFAULT_COLORS;
         }
-        getContentPane().setBackground(themeColor); //apply theme to main components
-        updatePanelColors(themeColor); //update all panels to match the theme
-        applyThemeTransition(themeColor);
+        currentColorIndex = (currentColorIndex + 1) % targetColors.length;
+        startColorTransition(targetColors[currentColorIndex]);
+    }
+    private void startColorTransition(Color targetColor) {
+        if (colorTransitionTimer.isRunning()) {
+            colorTransitionTimer.stop();
+        }
+
+        targetBackgroundColor = targetColor;
+        transitionStep = 0;
+        colorTransitionTimer.start();
+    }
+    private void updateColorTransition() {
+        if (transitionStep >= TRANSITION_STEPS) {
+            colorTransitionTimer.stop();
+            currentBackgroundColor = targetBackgroundColor;
+            return;
+        }
+
+        float ratio = (float) transitionStep / TRANSITION_STEPS;
+
+        int red = (int) (currentBackgroundColor.getRed() * (1 - ratio) + targetBackgroundColor.getRed() * ratio);
+        int green = (int) (currentBackgroundColor.getGreen() * (1 - ratio) + targetBackgroundColor.getGreen() * ratio);
+        int blue = (int) (currentBackgroundColor.getBlue() * (1 - ratio) + targetBackgroundColor.getBlue() * ratio);
+
+        Color intermediateColor = new Color(red, green, blue);
+        applyBackgroundColor(intermediateColor);
+
+        transitionStep++;
+    }
+    private void applyBackgroundColor(Color color) {
+        currentBackgroundColor = color;
+        getContentPane().setBackground(color);
+        updateAllPanelColors(color);
+        repaint();
     }
     
-    private void updatePanelColors(Color themeColor){
-        Component[] components = getContentPane().getComponents(); //get all components and update background
-        for (Component comp : components){
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
+    private void updateAllPanelColors(Color themeColor) {
+        Component[] components = getContentPane().getComponents();
+        for (Component comp : components) {
+            updateComponentColor(comp, themeColor);
+        }
+    }
+
+    private void updateComponentColor(Component comp, Color themeColor) {
+        if (comp instanceof JPanel) {
+            JPanel panel = (JPanel) comp;
+
+            // Don't change background of panels that should stay visible
+            if (!shouldKeepOriginalBackground(panel)) {
                 panel.setBackground(themeColor);
-                
-                updateChildComponents(panel, themeColor);
+                panel.setOpaque(true);
             }
+
+            // Update child components
+            for (Component child : panel.getComponents()) {
+                updateComponentColor(child, themeColor);
+            }
+        } else if (comp instanceof JList) {
+            // Keep list background white for readability but make selection color match theme
+            comp.setBackground(Color.WHITE);
+            if (comp instanceof JList) {
+                JList<?> list = (JList<?>) comp;
+                list.setSelectionBackground(themeColor.darker());
+                list.setSelectionForeground(Color.WHITE);
+            }
+        } else if (comp instanceof JButton || comp instanceof JTextField || comp instanceof JComboBox) {
+            // These components keep their original appearance for usability
+            comp.setBackground(UIManager.getColor(comp instanceof JButton ? "Button.background" : "TextField.background"));
+        } else {
+            // For other components, apply the theme color with slight transparency
+            Color semiTransparent = new Color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 200);
+            comp.setBackground(semiTransparent);
         }
     }
-    
-    private void updateChildComponents(Container container, Color themeColor) {
-        for (Component comp : container.getComponents()) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                panel.setBackground(themeColor);
-                updateChildComponents(panel, themeColor);
-            } else if (comp instanceof JList) {
-                // Keep list background white for readability
-                comp.setBackground(Color.WHITE);
-            } else if (!(comp instanceof JButton) && !(comp instanceof JTextField)) {
-                // Update other components but keep buttons and text fields standard
-                comp.setBackground(themeColor);
-            }
-        }
+
+    private boolean shouldKeepOriginalBackground(JPanel panel) {
+        // Check if this panel should keep its original background
+        // (e.g., control panels, input panels for better readability)
+        String panelName = panel.getName();
+        return panelName != null && (
+            panelName.contains("control") || 
+            panelName.contains("input") || 
+            panelName.contains("volume")
+        );
     }
     
-    private void applyThemeTransition(Color targetColor){
-        //simple fade effect
-        Timer transitionTimer = new Timer(50, null);
-        transitionTimer.addActionListener(new ActionListener() {
-            private int step = 0;
-            private final int totalSteps = 10;
-            private final Color startColor = getContentPane().getBackground();
-            
-            @Override
-            public void actionPerformed(ActionEvent e){
-                if (step >= totalSteps) {
-                    transitionTimer.stop();
-                    return;
-                }
-                float ratio = (float) step / totalSteps;
-                int red = (int) (startColor.getRed() * (1 - ratio) + targetColor.getRed() * ratio);
-                int green = (int) (startColor.getGreen() * (1 - ratio) + targetColor.getGreen() * ratio);
-                int blue = (int) (startColor.getBlue() * (1 - ratio) + targetColor.getBlue() * ratio);
-            
-                Color intermediateColor = new Color(red, green, blue);
-                getContentPane().setBackground(intermediateColor);
-                updatePanelColors(intermediateColor);
-            
-                step++;
-            }
-        });
-        transitionTimer.start();
-    }
+    
     //helper method to find node by song
     private Node findNodeBySongName(String songName){
         if (playlist == null || playlist.head == null) return null;
@@ -1162,6 +1237,25 @@ public class MainFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
         }
     }
+    //method for initialize the color transisition
+    private void initializeColorTransition() {
+        currentBackgroundColor = DEFAULT_COLORS[0];
+        targetBackgroundColor = DEFAULT_COLORS[0];
+
+        colorTransitionTimer = new Timer(TRANSITION_DELAY, e -> updateColorTransition());
+        colorTransitionTimer.setRepeats(true);
+
+        // Set initial background
+        applyBackgroundColor(currentBackgroundColor);
+    }
+    private void startMoodColorCycling() {
+    Timer moodCycleTimer = new Timer(5000, e -> { // Change color every 5 seconds
+        if (currentNode != null && isPlaying) {
+            updateThemeBasedOnMood();
+        }
+    });
+    moodCycleTimer.start();
+}
 }
 
 /*
