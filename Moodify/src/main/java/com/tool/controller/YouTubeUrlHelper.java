@@ -14,15 +14,22 @@ import java.nio.file.Paths;
  */
 public class YouTubeUrlHelper {
     
-    public static String getStreamLinkFromYouTube(String youtubeUrl){
-    try{
+    public static String getStreamLinkFromYouTube(String youtubeUrl) {
+    try {
+        // Remove any surrounding quotes first
+        String cleanedInput = youtubeUrl.replaceAll("^\"|\"$", "");
+        
+        // Check if the input is a file path instead of a YouTube URL
+        if (isFilePath(cleanedInput)) {
+            System.out.println("Input is a file path, returning: " + cleanedInput);
+            return cleanedInput;
+        }
+        
         System.out.println("Current Working Directory: " + System.getProperty("user.dir"));
-
 
         String yt_dl_filePath = Paths.get("src", "main", "resources", "yt-dlp.exe").toString();
         System.out.println("Resolved Path: " + yt_dl_filePath);
 
-        
         System.out.println("Getting stream link from: " + youtubeUrl);
 
         ProcessBuilder processBuilder = new ProcessBuilder(
@@ -61,5 +68,43 @@ public class YouTubeUrlHelper {
         System.out.println("Error: " + e.getMessage());
     }
     return null;
+}
+
+// Helper method to check if a string is a file path
+private static boolean isFilePath(String input) {
+    // Check for common file path indicators
+    if (input == null || input.trim().isEmpty()) {
+        return false;
     }
+    
+    // Remove any surrounding quotes for the check
+    String cleanedInput = input.replaceAll("^\"|\"$", "");
+    
+    // Check if it starts with common file path patterns
+    if (cleanedInput.startsWith("/") || // Unix absolute path
+        cleanedInput.startsWith("~/") || // Unix home directory
+        cleanedInput.matches("^[A-Za-z]:\\\\") || // Windows drive letter
+        cleanedInput.startsWith(".\\") || // Windows relative path
+        cleanedInput.startsWith("./") || // Unix relative path
+        cleanedInput.contains("\\") || // Contains backslash (Windows)
+        cleanedInput.contains("/")) {  // Contains forward slash (Unix)
+        
+        // Additional check to exclude URLs that might contain slashes
+        if (cleanedInput.startsWith("http://") || 
+            cleanedInput.startsWith("https://") ||
+            cleanedInput.startsWith("www.") ||
+            cleanedInput.startsWith("youtube.com") ||
+            cleanedInput.startsWith("youtu.be")) {
+            return false;
+        }
+        return true;
+    }
+    
+    // Check for file extension patterns
+    if (cleanedInput.matches(".*\\.(mp4|avi|mov|wmv|flv|mkv|mp3|wav|m4a|wma)$")) {
+        return true;
+    }
+    
+    return false;
+}
 }

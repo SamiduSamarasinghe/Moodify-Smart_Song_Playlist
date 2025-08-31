@@ -4,13 +4,8 @@
  */
 package com.tool.view;
 
-import com.tool.controller.AutoClosingDialog;
-import com.tool.controller.BpmDetector;
-import com.tool.controller.MoodShuffler;
-import com.tool.controller.PlaylistSaveHelper;
-import com.tool.controller.PlaylistSorter;
-import com.tool.controller.YouTubeUrlHelper;
-import com.tool.controller.RemoveSong;
+
+import com.tool.controller.*;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
@@ -38,6 +33,9 @@ public class MainFrame extends JFrame {
     private JList<String> playListJList; //display songss names
     private DefaultListModel<String> listModel; //the data model for jlist
     private PlaylistSorter playlistSorter;
+
+    //buttons
+    private JButton favoritesButton;
     
     //input feilds
     private JTextField titleTextField;
@@ -55,28 +53,64 @@ public class MainFrame extends JFrame {
     private boolean isPlaying = false; //to track play, pause 
     private Timer songDurationTimer;
     private int remainingSeconds;
+    private boolean showingFavorites = false;
     
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
     
-    
-    
     private String streamUrl;
     private long currentTime;
     private long newTime;
-    private long totalDuration;   
+    private long totalDuration;  
+    
+    //color types for each mood (5 shades each)
+    private static final Color[] CALM_COLORS = {
+        new Color(230, 255, 230),    // Very light green
+        new Color(200, 240, 200),    // Light green
+        new Color(170, 225, 170),    // Medium light green
+        new Color(140, 210, 140),    // Medium green
+        new Color(110, 190, 110)     // Dark green
+    };
 
-    //color types for each mood
-    private static final Color CALM_COLOR = new Color(200, 230, 200);//green
-    private static final Color NEUTRAL_COLOR = new Color(25, 240, 200);//yellow
-    private static final  Color ENERGETIC_COLOR = new Color(255, 200, 200); //red
-    private static final Color DEFAULT_COLOR = new Color(140, 240, 240);//gray
+    private static final Color[] NEUTRAL_COLORS = {
+        new Color(255, 250, 200),    // Very light yellow
+        new Color(255, 240, 180),    // Light yellow
+        new Color(255, 230, 150),    // Medium light yellow
+        new Color(255, 220, 120),    // Medium yellow
+        new Color(255, 210, 90)      // Dark yellow
+    };
+
+    private static final Color[] ENERGETIC_COLORS = {
+        new Color(255, 220, 220),    // Very light red
+        new Color(255, 200, 200),    // Light red
+        new Color(255, 180, 180),    // Medium light red
+        new Color(255, 160, 160),    // Medium red
+        new Color(255, 140, 140)     // Dark red
+    };
+
+    private static final Color[] DEFAULT_COLORS = {
+        new Color(240, 240, 255),    // Very light blue
+        new Color(220, 220, 240),    // Light blue
+        new Color(200, 200, 220),    // Medium light blue
+        new Color(180, 180, 200),    // Medium blue
+        new Color(160, 160, 180)     // Dark blue
+    };
+    private Timer colorTransitionTimer;
+    private Color currentBackgroundColor;
+    private Color targetBackgroundColor;
+    private int currentColorIndex = 0;
+    private int transitionStep = 0;
+    private final int TRANSITION_STEPS = 30; //smoothness of transition
+    private final int TRANSITION_DELAY = 50; //ms between steps
+
     
     
     public MainFrame() {
         playlist = PlaylistSaveHelper.loadPlaylistFromFile();
         playlistSorter = new PlaylistSorter();
         initializeUI();
+        initializeColorTransition();
+        startMoodColorCycling();
         updatePlayListDisplay();
         
         //initialize the song duration timer
@@ -98,11 +132,18 @@ public class MainFrame extends JFrame {
     setTitle("Music Playlist Manager");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLayout(new BorderLayout(10, 10));
+
+        // 1. Basic JFrame setup
+        setTitle("Moodify Playlist Manager");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        //set modern dark theme
+        setLayout(new BorderLayout(10, 10));
     
-    // Set modern look and feel
-    try {
+        // Set modern look and feel
+        try {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    } catch (Exception e) {
+            } catch (Exception e) {
         e.printStackTrace();
     }
     
@@ -110,16 +151,19 @@ public class MainFrame extends JFrame {
 
     // 2. Build the North Panel (Input Form)
     JPanel inputPanel = createInputPanel();
+    inputPanel.setName("inputPanel");
     add(inputPanel, BorderLayout.NORTH);
 
     // 3. Build the Center Panel (Playlist View)
     JPanel centerPanel = createCenterPanel();
+    centerPanel.setName("centerPanel");
     add(centerPanel, BorderLayout.CENTER);
     addRightClickMenu();
   
     
     // 4. Build the South Panel (Controls)
     JPanel controlPanel = createControlPanel();
+    controlPanel.setName("controlPanel");
     songProgress = new JSlider(0, 1000); //to show song progress
     controlPanel.add(songProgress, BorderLayout.CENTER);
     add(controlPanel, BorderLayout.SOUTH);
@@ -424,7 +468,7 @@ public class MainFrame extends JFrame {
 
     return panel;
     }
-    
+
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -434,20 +478,24 @@ public class MainFrame extends JFrame {
         searchPanel.add(searchField);
         JButton searchButton = new JButton("Go");
         searchPanel.add(searchButton);
-        
-        JButton favoritesButton = new JButton("⭐ Favorites");
+
+        // Store reference to favorites button
+        favoritesButton = new JButton("⭐ Favorites");
         favoritesButton.addActionListener(e -> showFavorites());
         searchPanel.add(favoritesButton);
-        
+
         panel.add(searchPanel, BorderLayout.NORTH);
-        
+
         searchButton.addActionListener(e -> searchSongs());
         searchPanel.add(searchButton);
         panel.add(searchPanel, BorderLayout.NORTH);
 
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
-        
+
+        // Remove the complex listener and use a simpler approach
+        // The button text will be updated when needed, not on every list change
+
         playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -455,29 +503,16 @@ public class MainFrame extends JFrame {
                     int index = playListJList.locationToIndex(e.getPoint());
                     if (index >= 0){
                         playSelectedSong(index);
-                    }       
+                    }
                 }else if (e.getClickCount() == 2){ //double click for make song as favorite
                     int index = playListJList.locationToIndex(e.getPoint());
-
                     if (index >= 0){
                         toggleFavorite(index);
                     }
                 }
+            }
+        });
 
-            }
-        });
-        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int index = playListJList.locationToIndex(e.getPoint());
-                    if (index >= 0) {
-                        toggleFavorite(index);
-                    }
-                }
-            }
-        });
-        
         JScrollPane scrollPane = new JScrollPane(playListJList);
         scrollPane.setPreferredSize(new Dimension(500, 300));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -485,44 +520,52 @@ public class MainFrame extends JFrame {
         return panel;
     }
     //add new method for play selected song
-    private void playSelectedSong(int index){
-        if(playlist == null || playlist.head == null){
+    private void playSelectedSong(int index) {
+        if (playlist == null || playlist.head == null) {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        //get node at the selected index
-        Node selectedNode = getNodeAtIndex(index);
-        if(selectedNode == null){
+
+        // Check if we're in favorites view
+        boolean inFavoritesView = isInFavoritesView();
+
+        // Get node at the selected index
+        Node selectedNode;
+        if (inFavoritesView) {
+            selectedNode = getFavoriteNodeAtIndex(index);
+        } else {
+            selectedNode = getNodeAtIndex(index);
+        }
+
+        if (selectedNode == null) {
             JOptionPane.showMessageDialog(this, "Could not find the selected song", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        //set as current node and play
+
+        // Rest of the method remains the same...
         currentNode = selectedNode;
         isPlaying = true;
-        
-        //reset timer for the new song
         remainingSeconds = currentNode.getDuration();
-        if(songDurationTimer != null){
+
+        if (songDurationTimer != null) {
             songDurationTimer.restart();
         }
+
         updateThemeBasedOnMood();
-        
-        //play the song
+
         new Thread(() -> {
             streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
-            
+
             if (streamUrl != null) {
-                //stop current playing song
-                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null){
+                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
                     embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
                 }
-                //play the new song
                 embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
                     updatePlayListDisplay();
                 });
-            } else { 
+            } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
                     updatePlayListDisplay();
@@ -534,13 +577,14 @@ public class MainFrame extends JFrame {
     
     
     private JPanel createControlPanel() {
-
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panel.setName("controlPanel");
         panel.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
             "Playlist Controls"
         ));
-        panel.setBackground(new Color(250, 250, 250));
+        panel.setOpaque(true); // Ensure panel is opaque
+        panel.setBackground(new Color(250, 250, 250, 230)); // Semi-transparent white
         
         //volume control
         JPanel volumePanel = createVolumeControl();
@@ -775,84 +819,113 @@ public class MainFrame extends JFrame {
     }
     //update theme based on mood
     private void updateThemeBasedOnMood(){
-        Color themeColor = DEFAULT_COLOR;
-        
-        if (currentNode != null && isPlaying){
-            switch(currentNode.getMoodScore()){
+        Color[] targetColors;
+    
+        if (currentNode != null && isPlaying) {
+            switch(currentNode.getMoodScore()) {
                 case 1: 
-                    themeColor = CALM_COLOR;
+                    targetColors = CALM_COLORS;
                     break;
                 case 2: 
-                    themeColor = NEUTRAL_COLOR;
+                    targetColors = NEUTRAL_COLORS;
                     break;
                 case 3: 
-                    themeColor = ENERGETIC_COLOR;
+                    targetColors = ENERGETIC_COLORS;
                     break;
                 default:
-                    themeColor = DEFAULT_COLOR;
+                    targetColors = DEFAULT_COLORS;
             }
+        } else {
+            targetColors = DEFAULT_COLORS;
         }
-        getContentPane().setBackground(themeColor); //apply theme to main components
-        updatePanelColors(themeColor); //update all panels to match the theme
-        applyThemeTransition(themeColor);
+        currentColorIndex = (currentColorIndex + 1) % targetColors.length;
+        startColorTransition(targetColors[currentColorIndex]);
+    }
+    private void startColorTransition(Color targetColor) {
+        if (colorTransitionTimer.isRunning()) {
+            colorTransitionTimer.stop();
+        }
+
+        targetBackgroundColor = targetColor;
+        transitionStep = 0;
+        colorTransitionTimer.start();
+    }
+    private void updateColorTransition() {
+        if (transitionStep >= TRANSITION_STEPS) {
+            colorTransitionTimer.stop();
+            currentBackgroundColor = targetBackgroundColor;
+            return;
+        }
+
+        float ratio = (float) transitionStep / TRANSITION_STEPS;
+
+        int red = (int) (currentBackgroundColor.getRed() * (1 - ratio) + targetBackgroundColor.getRed() * ratio);
+        int green = (int) (currentBackgroundColor.getGreen() * (1 - ratio) + targetBackgroundColor.getGreen() * ratio);
+        int blue = (int) (currentBackgroundColor.getBlue() * (1 - ratio) + targetBackgroundColor.getBlue() * ratio);
+
+        Color intermediateColor = new Color(red, green, blue);
+        applyBackgroundColor(intermediateColor);
+
+        transitionStep++;
+    }
+    private void applyBackgroundColor(Color color) {
+        currentBackgroundColor = color;
+        getContentPane().setBackground(color);
+        updateAllPanelColors(color);
+        repaint();
     }
     
-    private void updatePanelColors(Color themeColor){
-        Component[] components = getContentPane().getComponents(); //get all components and update background
-        for (Component comp : components){
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
+    private void updateAllPanelColors(Color themeColor) {
+        Component[] components = getContentPane().getComponents();
+        for (Component comp : components) {
+            updateComponentColor(comp, themeColor);
+        }
+    }
+
+    private void updateComponentColor(Component comp, Color themeColor) {
+        if (comp instanceof JPanel) {
+            JPanel panel = (JPanel) comp;
+
+            // Don't change background of panels that should stay visible
+            if (!shouldKeepOriginalBackground(panel)) {
                 panel.setBackground(themeColor);
-                
-                updateChildComponents(panel, themeColor);
+                panel.setOpaque(true);
             }
+
+            // Update child components
+            for (Component child : panel.getComponents()) {
+                updateComponentColor(child, themeColor);
+            }
+        } else if (comp instanceof JList) {
+            // Keep list background white for readability but make selection color match theme
+            comp.setBackground(Color.WHITE);
+            if (comp instanceof JList) {
+                JList<?> list = (JList<?>) comp;
+                list.setSelectionBackground(themeColor.darker());
+                list.setSelectionForeground(Color.WHITE);
+            }
+        } else if (comp instanceof JButton || comp instanceof JTextField || comp instanceof JComboBox) {
+            // These components keep their original appearance for usability
+            comp.setBackground(UIManager.getColor(comp instanceof JButton ? "Button.background" : "TextField.background"));
+        } else {
+            // For other components, apply the theme color with slight transparency
+            Color semiTransparent = new Color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 200);
+            comp.setBackground(semiTransparent);
         }
     }
-    
-    private void updateChildComponents(Container container, Color themeColor) {
-        for (Component comp : container.getComponents()) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                panel.setBackground(themeColor);
-                updateChildComponents(panel, themeColor);
-            } else if (comp instanceof JList) {
-                // Keep list background white for readability
-                comp.setBackground(Color.WHITE);
-            } else if (!(comp instanceof JButton) && !(comp instanceof JTextField)) {
-                // Update other components but keep buttons and text fields standard
-                comp.setBackground(themeColor);
-            }
-        }
+
+    private boolean shouldKeepOriginalBackground(JPanel panel) {
+        // Check if this panel should keep its original background
+        // (e.g., control panels, input panels for better readability)
+        String panelName = panel.getName();
+        return panelName != null && (
+            panelName.contains("control") || 
+            panelName.contains("input") || 
+            panelName.contains("volume")
+        );
     }
     
-    private void applyThemeTransition(Color targetColor){
-        //simple fade effect
-        Timer transitionTimer = new Timer(50, null);
-        transitionTimer.addActionListener(new ActionListener() {
-            private int step = 0;
-            private final int totalSteps = 10;
-            private final Color startColor = getContentPane().getBackground();
-            
-            @Override
-            public void actionPerformed(ActionEvent e){
-                if (step >= totalSteps) {
-                    transitionTimer.stop();
-                    return;
-                }
-                float ratio = (float) step / totalSteps;
-                int red = (int) (startColor.getRed() * (1 - ratio) + targetColor.getRed() * ratio);
-                int green = (int) (startColor.getGreen() * (1 - ratio) + targetColor.getGreen() * ratio);
-                int blue = (int) (startColor.getBlue() * (1 - ratio) + targetColor.getBlue() * ratio);
-            
-                Color intermediateColor = new Color(red, green, blue);
-                getContentPane().setBackground(intermediateColor);
-                updatePanelColors(intermediateColor);
-            
-                step++;
-            }
-        });
-        transitionTimer.start();
-    }
+    
     //helper method to find node by song
     private Node findNodeBySongName(String songName){
         if (playlist == null || playlist.head == null) return null;
@@ -866,38 +939,68 @@ public class MainFrame extends JFrame {
         }
         return null;
     }
-    
+
     private void updatePlayListDisplay() {
+        // Store whether we're currently in favorites view
+        boolean wasInFavoritesView = isInFavoritesView();
+
         listModel.clear();
+
         if (playlist != null && playlist.head != null) {
             Node current = playlist.head;
             int index = 0;
+
             while (current != null) {
-                String songInfo = current.songName + " - " + current.artistName + 
-                        " [ " + current.getMoodScore() + " ] "+ " - "
-                        + playlistSorter.formatDuration(current.getDuration());
-                
-                if (current == currentNode && isPlaying){
-                    songInfo = "▶ " + songInfo;
+                // Only show favorite songs if we were in favorites view
+                if (!wasInFavoritesView || current.isFavorite()) {
+                    String songInfo = current.songName + " - " + current.artistName +
+                            " [ " + current.getMoodScore() + " ] " + " - "
+                            + playlistSorter.formatDuration(current.getDuration());
+
+                    if (current == currentNode && isPlaying) {
+                        songInfo = "▶ " + songInfo;
+                    }
+                    // Add favorite star
+                    if (current.isFavorite()) {
+                        songInfo = "⭐ " + songInfo;
+                    }
+
+                    listModel.addElement(songInfo);
                 }
-                //add favorite star
-                if (current.isFavorite()){
-                    songInfo = "⭐ " + songInfo;
-                }
-                
-                listModel.addElement(songInfo);
                 current = current.nextNode;
                 index++;
             }
-            //highlight current playing song in playlist
-            if (currentNode != null){
-                int currentIndex = getIndexOfNode(currentNode);
-                if(currentIndex >= 0){
+
+            // Highlight current playing song in playlist
+            if (currentNode != null) {
+                int currentIndex = getIndexOfNodeInDisplay(currentNode, wasInFavoritesView);
+                if (currentIndex >= 0) {
                     playListJList.setSelectedIndex(currentIndex);
                     playListJList.ensureIndexIsVisible(currentIndex);
                 }
             }
         }
+    }
+
+    // Helper method to get index of node in the current display view
+    private int getIndexOfNodeInDisplay(Node targetNode, boolean favoritesOnly) {
+        if (playlist == null || playlist.head == null || targetNode == null) return -1;
+
+        Node current = playlist.head;
+        int displayIndex = 0;
+
+        while (current != null) {
+            // Only count nodes that should be displayed
+            if (!favoritesOnly || current.isFavorite()) {
+                if (current == targetNode) {
+                    return displayIndex;
+                }
+                displayIndex++;
+            }
+            current = current.nextNode;
+        }
+
+        return -1;
     }
     //helper method for get index of node
     private int getIndexOfNode(Node targetNode) {
@@ -937,44 +1040,8 @@ public class MainFrame extends JFrame {
         return MoodShuffler.INTENSITY_MEDIUM;
     }
     //play song method
-    private void playSong(){
-        if (playlist == null || playlist.head == null){
-            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if(currentNode == null){
-            currentNode = playlist.head;
-        }
-        isPlaying = true;
-        //start duration timer
-        remainingSeconds = currentNode.getDuration();
-        songDurationTimer.start();
-        
-        //update theme based on mood
-        updateThemeBasedOnMood();
-        
-        //run the getStreamLink Method on a separeate thread to avoid frezzing main GUI
-        new Thread(()->{
-            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
-            //
-            if(streamUrl != null){
-                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
-                
-                SwingUtilities.invokeLater(()->{
-                    AutoClosingDialog.show(this,"Now Playing: " + currentNode.songName + " - " + currentNode.artistName,"Message",1,2000);
-                    updatePlayListDisplay();
-                });
-            }
-            else{
-                SwingUtilities.invokeLater(()->{
-                JOptionPane.showMessageDialog(this,"Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
-                updatePlayListDisplay();
-                });
-            }
-        }).start();
-        
-        AutoClosingDialog.show(this,"Fetching your song... just a moment!","Message",1,5000);
-        updatePlayListDisplay();        
+    private void playSong() {
+        playSongWithoutChangingView();
     }
 
     //add timer for autu-play
@@ -998,53 +1065,118 @@ public class MainFrame extends JFrame {
         
         JOptionPane.showMessageDialog(this, "Playback Paused");
     }
-    
-    private void nextSong(){
-        if (currentNode != null && currentNode.nextNode != null){
-            currentNode = currentNode.nextNode;
-                
-                //reset timer for new song
-                remainingSeconds = currentNode.getDuration();
-                songDurationTimer.restart();
-                
+
+    private void nextSong() {
+        if (currentNode != null) {
+            Node nextNode;
+
+            if (showingFavorites) {
+                // In favorites view - find next favorite song
+                nextNode = findNextFavoriteNode(currentNode);
+            } else {
+                // In normal view - use regular next node
+                nextNode = currentNode.nextNode;
+            }
+
+            if (nextNode != null) {
+                currentNode = nextNode;
+                resetTimerForCurrentSong();
                 updateThemeBasedOnMood();
-                
-                playSong();
-        }else {
-            JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
-            isPlaying = false;
-            songDurationTimer.stop(); //stop timer when no more songs
-            updatePlayListDisplay();
+                playSongWithoutChangingView(); // Use new method that doesn't change view
+            } else {
+                JOptionPane.showMessageDialog(this, "No Next Song Available!", "Info", JOptionPane.INFORMATION_MESSAGE);
+                isPlaying = false;
+                songDurationTimer.stop();
+                updatePlayListDisplay();
+            }
         }
     }
-    
-    private void previousSong(){
-        if (currentNode != null && currentNode.previousNode != null){
-            currentNode = currentNode.previousNode;
-            
-            //reset timer for the previous song
-            remainingSeconds = currentNode.getDuration();
+
+    private void previousSong() {
+        if (currentNode != null) {
+            Node previousNode;
+
+            if (showingFavorites) {
+                // In favorites view - find previous favorite song
+                previousNode = findPreviousFavoriteNode(currentNode);
+            } else {
+                // In normal view - use regular previous node
+                previousNode = currentNode.previousNode;
+            }
+
+            if (previousNode != null) {
+                currentNode = previousNode;
+                resetTimerForCurrentSong();
+                updateThemeBasedOnMood();
+                playSongWithoutChangingView(); // Use new method that doesn't change view
+            } else {
+                JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    // Helper method to find first favorite node
+    private Node findFirstFavoriteNode() {
+        if (playlist == null || playlist.head == null) return null;
+
+        Node current = playlist.head;
+        while (current != null) {
+            if (current.isFavorite()) {
+                return current;
+            }
+            current = current.nextNode;
+        }
+        return null;
+    }
+
+    // Helper method to find next favorite node
+    private Node findNextFavoriteNode(Node startNode) {
+        if (playlist == null || startNode == null) return null;
+
+        Node current = startNode.nextNode;
+        while (current != null) {
+            if (current.isFavorite()) {
+                return current;
+            }
+            current = current.nextNode;
+        }
+        return null;
+    }
+
+    // Helper method to find previous favorite node
+    private Node findPreviousFavoriteNode(Node startNode) {
+        if (playlist == null || startNode == null) return null;
+
+        Node current = startNode.previousNode;
+        while (current != null) {
+            if (current.isFavorite()) {
+                return current;
+            }
+            current = current.previousNode;
+        }
+        return null;
+    }
+
+    // Helper method to reset timer for current song
+    private void resetTimerForCurrentSong() {
+        remainingSeconds = currentNode.getDuration();
+        if (songDurationTimer != null) {
             songDurationTimer.restart();
-            
-            updateThemeBasedOnMood();
-            
-            playSong();
-                       
-        }else{
-            JOptionPane.showMessageDialog(this, "No Previous Song Available", "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
-    
-    private void clearPlaylist(){
-        if (playlist != null){
+
+    private void clearPlaylist() {
+        if (playlist != null) {
             playlist.clear();
             currentNode = null;
             isPlaying = false;
+            showingFavorites = false; // Exit favorites view
             updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist Cleared!");
         }
     }
-    
+
+
     private void skipForward() {
         if (currentNode != null && isPlaying) {
             try{
@@ -1102,30 +1234,77 @@ public class MainFrame extends JFrame {
     
 
                 //  REMOVE SONG FUNCTIONALITY
-    
-        private void addRightClickMenu()
-             {
-                 JPopupMenu popupMenu = new JPopupMenu();
-                  JMenuItem removeItem = new JMenuItem("Remove Song");
-    
 
-                     removeItem.addActionListener(e -> removeSelectedSong());
-                     popupMenu.add(removeItem);
-    
-                     playListJList.setComponentPopupMenu(popupMenu);
-    
-                    playListJList.addMouseListener(new java.awt.event.MouseAdapter()  
-                    {
-        public void mousePressed(java.awt.event.MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                int index = playListJList.locationToIndex(e.getPoint());
-                if (index != -1) {
-                    playListJList.setSelectedIndex(index);
+    private void addRightClickMenu() {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        JMenuItem removeItem = new JMenuItem("Remove Song");
+        removeItem.addActionListener(e -> removeSelectedSong());
+        popupMenu.add(removeItem);
+
+        // Add favorite toggle menu item
+        JMenuItem favoriteItem = new JMenuItem("Toggle Favorite");
+        favoriteItem.addActionListener(e -> toggleFavoriteSelectedSong());
+        popupMenu.add(favoriteItem);
+
+        playListJList.setComponentPopupMenu(popupMenu);
+
+        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int index = playListJList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        playListJList.setSelectedIndex(index);
+
+                        // Update the favorite menu item text based on current status
+                        Node selectedNode = getNodeAtIndex(index);
+                        if (selectedNode != null) {
+                            if (selectedNode.isFavorite()) {
+                                favoriteItem.setText("Remove from Favorites");
+                            } else {
+                                favoriteItem.setText("Add to Favorites");
+                            }
+                        }
+                    }
                 }
             }
+        });
+    }
+    private void toggleFavoriteSelectedSong() {
+        int selectedIndex = playListJList.getSelectedIndex();
+        if (selectedIndex == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a song first!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-    });
-}
+
+        String selectedValue = playListJList.getSelectedValue();
+        String songName = selectedValue.split(" - ")[0].trim();
+
+        // Remove the "▶ " prefix if present (for currently playing song)
+        if (songName.startsWith("▶ ")) {
+            songName = songName.substring(2);
+        }
+        // Remove the "⭐ " prefix if present (already favorite)
+        if (songName.startsWith("⭐ ")) {
+            songName = songName.substring(2);
+        }
+
+        AddfavSong favController = new AddfavSong(playlist);
+        boolean success = favController.toggleFavorite(songName);
+
+        if (success) {
+            Node selectedNode = getNodeAtIndex(selectedIndex);
+            String message = selectedNode.isFavorite() ?
+                    "Added to favorites: " + songName :
+                    "Removed from favorites: " + songName;
+
+            JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+            updatePlayListDisplay();
+            PlaylistSaveHelper.savePlaylistToFile(playlist);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update favorite status: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
             // remove select  song 
               
       private void removeSelectedSong() {
@@ -1253,34 +1432,207 @@ public class MainFrame extends JFrame {
             savePlaylist();
         }
     }
-    
+
     private void showFavorites() {
+        if (showingFavorites) {
+            // If already in favorites view, return to normal view
+            exitFavoritesView();
+            return;
+        }
+
+        if (playlist == null || playlist.head == null) {
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        showingFavorites = true;
         listModel.clear();
         Node current = playlist.head;
-        while (current != null){
-            if (current.isFavorite()){
-                String songInfo = "⭐ " + current.songName + " - " + current.artistName +
-                        " [ " + current.getMoodScore() + " ] ";
+        boolean hasFavorites = false;
+
+        while (current != null) {
+            if (current.isFavorite()) {
+                hasFavorites = true;
+                String songInfo = current.songName + " - " + current.artistName +
+                        " [ " + current.getMoodScore() + " ] " + " - " +
+                        playlistSorter.formatDuration(current.getDuration());
+
+                if (current == currentNode && isPlaying) {
+                    songInfo = "▶ " + songInfo;
+                }
+
+                // Add favorite star
+                songInfo = "⭐ " + songInfo;
+
                 listModel.addElement(songInfo);
             }
             current = current.nextNode;
+        }
+
+        if (!hasFavorites) {
+            JOptionPane.showMessageDialog(this,
+                    "No favorite songs found!\nRight-click on a song and select 'Add to Favorites'.",
+                    "No Favorites",
+                    JOptionPane.INFORMATION_MESSAGE);
+            showingFavorites = false;
+            updatePlayListDisplay(); // Return to normal view
+        } else {
+            // Highlight current playing song if it's a favorite
+            if (currentNode != null && currentNode.isFavorite()) {
+                int currentIndex = getIndexOfFavoriteNode(currentNode);
+                if (currentIndex >= 0) {
+                    playListJList.setSelectedIndex(currentIndex);
+                    playListJList.ensureIndexIsVisible(currentIndex);
+                }
+            }
+        }
+
+        updateFavoritesButtonText(); // Update the button text when entering favorites view
+    }
+    private void exitFavoritesView() {
+        showingFavorites = false;
+        updatePlayListDisplay();
+    }
+    // Helper method to get index of a favorite node in the favorites view
+    private int getIndexOfFavoriteNode(Node targetNode) {
+        if (playlist == null || playlist.head == null || targetNode == null || !targetNode.isFavorite()) return -1;
+
+        Node current = playlist.head;
+        int index = 0;
+
+        while (current != null) {
+            if (current.isFavorite()) {
+                if (current == targetNode) {
+                    return index;
+                }
+                index++;
+            }
+            current = current.nextNode;
+        }
+        return -1;
+    }
+    private boolean isInFavoritesView() {
+        return showingFavorites;
+    }
+    private Node getFavoriteNodeAtIndex(int index) {
+        if (playlist == null || index < 0) return null;
+
+        Node current = playlist.head;
+        int currentIndex = 0;
+
+        while (current != null) {
+            if (current.isFavorite()) {
+                if (currentIndex == index) {
+                    return current;
+                }
+                currentIndex++;
+            }
+            current = current.nextNode;
+        }
+        return null;
+    }
+    // New method that plays song without changing the view
+    private void playSongWithoutChangingView() {
+        if (playlist == null || playlist.head == null) {
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Check if we're in favorites view and current node is no longer a favorite
+        if (showingFavorites && (currentNode == null || !currentNode.isFavorite())) {
+            // Find the first favorite song
+            currentNode = findFirstFavoriteNode();
+            if (currentNode == null) {
+                JOptionPane.showMessageDialog(this, "No favorite songs available!", "Error", JOptionPane.WARNING_MESSAGE);
+                showingFavorites = false;
+                updatePlayListDisplay();
+                return;
+            }
+        }
+
+        if (currentNode == null) {
+            currentNode = playlist.head;
+        }
+
+        isPlaying = true;
+        remainingSeconds = currentNode.getDuration();
+        if (songDurationTimer != null) {
+            songDurationTimer.start();
+        }
+
+        updateThemeBasedOnMood();
+
+        new Thread(() -> {
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
+
+            if (streamUrl != null) {
+                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
+                    embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
+                }
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                SwingUtilities.invokeLater(() -> {
+                    AutoClosingDialog.show(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName, "Message", 1, 2000);
+                    // Update display without changing view mode
+                    updatePlayListDisplay();
+                });
+            } else {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                    updatePlayListDisplay();
+                });
+            }
+        }).start();
+
+        AutoClosingDialog.show(this, "Fetching your song... just a moment!", "Message", 1, 5000);
+        updatePlayListDisplay();
+    }
+
+    private void updateFavoritesButtonText() {
+        if (favoritesButton != null) {
+            if (showingFavorites) {
+                favoritesButton.setText("📋 All Songs");
+                favoritesButton.setToolTipText("Click to show all songs");
+            } else {
+                favoritesButton.setText("⭐ Favorites");
+                favoritesButton.setToolTipText("Click to show favorite songs only");
+            }
         }
     }
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainFrame());
-    }    
-    
+    }
+
     private void importPlaylistManual() {
         DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
         if (importedPlaylist != null && importedPlaylist.head != null) {
             this.playlist = importedPlaylist;
             currentNode = null;
             isPlaying = false;
+            showingFavorites = false; // Exit favorites view
             updatePlayListDisplay();
             JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
         }
     }
+    //method for initialize the color transisition
+    private void initializeColorTransition() {
+        currentBackgroundColor = DEFAULT_COLORS[0];
+        targetBackgroundColor = DEFAULT_COLORS[0];
+
+        colorTransitionTimer = new Timer(TRANSITION_DELAY, e -> updateColorTransition());
+        colorTransitionTimer.setRepeats(true);
+
+        // Set initial background
+        applyBackgroundColor(currentBackgroundColor);
+    }
+    private void startMoodColorCycling() {
+    Timer moodCycleTimer = new Timer(5000, e -> { // Change color every 5 seconds
+        if (currentNode != null && isPlaying) {
+            updateThemeBasedOnMood();
+        }
+    });
+    moodCycleTimer.start();
+}
 }
 
 /*
