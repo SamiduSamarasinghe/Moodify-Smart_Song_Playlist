@@ -4,12 +4,7 @@
  */
 package com.tool.view;
 
-import com.tool.controller.AutoClosingDialog;
-import com.tool.controller.MoodShuffler;
-import com.tool.controller.PlaylistSaveHelper;
-import com.tool.controller.PlaylistSorter;
-import com.tool.controller.YouTubeUrlHelper;
-import com.tool.controller.RemoveSong;
+import com.tool.controller.*;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
@@ -411,44 +406,52 @@ public class MainFrame extends JFrame {
         return panel;
     }
     //add new method for play selected song
-    private void playSelectedSong(int index){
-        if(playlist == null || playlist.head == null){
+    private void playSelectedSong(int index) {
+        if (playlist == null || playlist.head == null) {
             JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        //get node at the selected index
-        Node selectedNode = getNodeAtIndex(index);
-        if(selectedNode == null){
+
+        // Check if we're in favorites view
+        boolean inFavoritesView = isInFavoritesView();
+
+        // Get node at the selected index
+        Node selectedNode;
+        if (inFavoritesView) {
+            selectedNode = getFavoriteNodeAtIndex(index);
+        } else {
+            selectedNode = getNodeAtIndex(index);
+        }
+
+        if (selectedNode == null) {
             JOptionPane.showMessageDialog(this, "Could not find the selected song", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        //set as current node and play
+
+        // Rest of the method remains the same...
         currentNode = selectedNode;
         isPlaying = true;
-        
-        //reset timer for the new song
         remainingSeconds = currentNode.getDuration();
-        if(songDurationTimer != null){
+
+        if (songDurationTimer != null) {
             songDurationTimer.restart();
         }
+
         updateThemeBasedOnMood();
-        
-        //play the song
+
         new Thread(() -> {
             streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
-            
+
             if (streamUrl != null) {
-                //stop current playing song
-                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null){
+                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
                     embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
                 }
-                //play the new song
                 embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
                     updatePlayListDisplay();
                 });
-            } else { 
+            } else {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
                     updatePlayListDisplay();
@@ -1058,30 +1061,77 @@ public class MainFrame extends JFrame {
     
 
                 //  REMOVE SONG FUNCTIONALITY
-    
-        private void addRightClickMenu()
-             {
-                 JPopupMenu popupMenu = new JPopupMenu();
-                  JMenuItem removeItem = new JMenuItem("Remove Song");
-    
 
-                     removeItem.addActionListener(e -> removeSelectedSong());
-                     popupMenu.add(removeItem);
-    
-                     playListJList.setComponentPopupMenu(popupMenu);
-    
-                    playListJList.addMouseListener(new java.awt.event.MouseAdapter()  
-                    {
-        public void mousePressed(java.awt.event.MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                int index = playListJList.locationToIndex(e.getPoint());
-                if (index != -1) {
-                    playListJList.setSelectedIndex(index);
+    private void addRightClickMenu() {
+        JPopupMenu popupMenu = new JPopupMenu();
+
+        JMenuItem removeItem = new JMenuItem("Remove Song");
+        removeItem.addActionListener(e -> removeSelectedSong());
+        popupMenu.add(removeItem);
+
+        // Add favorite toggle menu item
+        JMenuItem favoriteItem = new JMenuItem("Toggle Favorite");
+        favoriteItem.addActionListener(e -> toggleFavoriteSelectedSong());
+        popupMenu.add(favoriteItem);
+
+        playListJList.setComponentPopupMenu(popupMenu);
+
+        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int index = playListJList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        playListJList.setSelectedIndex(index);
+
+                        // Update the favorite menu item text based on current status
+                        Node selectedNode = getNodeAtIndex(index);
+                        if (selectedNode != null) {
+                            if (selectedNode.isFavorite()) {
+                                favoriteItem.setText("Remove from Favorites");
+                            } else {
+                                favoriteItem.setText("Add to Favorites");
+                            }
+                        }
+                    }
                 }
             }
+        });
+    }
+    private void toggleFavoriteSelectedSong() {
+        int selectedIndex = playListJList.getSelectedIndex();
+        if (selectedIndex == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a song first!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-    });
-}
+
+        String selectedValue = playListJList.getSelectedValue();
+        String songName = selectedValue.split(" - ")[0].trim();
+
+        // Remove the "▶ " prefix if present (for currently playing song)
+        if (songName.startsWith("▶ ")) {
+            songName = songName.substring(2);
+        }
+        // Remove the "⭐ " prefix if present (already favorite)
+        if (songName.startsWith("⭐ ")) {
+            songName = songName.substring(2);
+        }
+
+        AddfavSong favController = new AddfavSong(playlist);
+        boolean success = favController.toggleFavorite(songName);
+
+        if (success) {
+            Node selectedNode = getNodeAtIndex(selectedIndex);
+            String message = selectedNode.isFavorite() ?
+                    "Added to favorites: " + songName :
+                    "Removed from favorites: " + songName;
+
+            JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+            updatePlayListDisplay();
+            PlaylistSaveHelper.savePlaylistToFile(playlist);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update favorite status: " + songName, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
             // remove select  song 
               
       private void removeSelectedSong() {
@@ -1209,18 +1259,98 @@ public class MainFrame extends JFrame {
             savePlaylist();
         }
     }
-    
+
     private void showFavorites() {
+        if (playlist == null || playlist.head == null) {
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
         listModel.clear();
         Node current = playlist.head;
-        while (current != null){
-            if (current.isFavorite()){
-                String songInfo = "⭐ " + current.songName + " - " + current.artistName +
-                        " [ " + current.getMoodScore() + " ] ";
+        boolean hasFavorites = false;
+
+        while (current != null) {
+            if (current.isFavorite()) {
+                hasFavorites = true;
+                String songInfo = current.songName + " - " + current.artistName +
+                        " [ " + current.getMoodScore() + " ] " + " - " +
+                        playlistSorter.formatDuration(current.getDuration());
+
+                if (current == currentNode && isPlaying) {
+                    songInfo = "▶ " + songInfo;
+                }
+
+                // Add favorite star
+                songInfo = "⭐ " + songInfo;
+
                 listModel.addElement(songInfo);
             }
             current = current.nextNode;
         }
+
+        if (!hasFavorites) {
+            JOptionPane.showMessageDialog(this,
+                    "No favorite songs found!\nRight-click on a song and select 'Add to Favorites'.",
+                    "No Favorites",
+                    JOptionPane.INFORMATION_MESSAGE);
+            updatePlayListDisplay(); // Return to normal view
+        } else {
+            // Highlight current playing song if it's a favorite
+            if (currentNode != null && currentNode.isFavorite()) {
+                int currentIndex = getIndexOfFavoriteNode(currentNode);
+                if (currentIndex >= 0) {
+                    playListJList.setSelectedIndex(currentIndex);
+                    playListJList.ensureIndexIsVisible(currentIndex);
+                }
+            }
+        }
+    }
+    private int getIndexOfFavoriteNode(Node targetNode) {
+        if (playlist == null || playlist.head == null || targetNode == null) return -1;
+
+        Node current = playlist.head;
+        int index = 0;
+
+        while (current != null) {
+            if (current.isFavorite()) {
+                if (current == targetNode) {
+                    return index;
+                }
+                index++;
+            }
+            current = current.nextNode;
+        }
+        return -1;
+    }
+    private boolean isInFavoritesView() {
+        // Check if all visible items have the favorite star
+        if (listModel.size() == 0) return false;
+
+        for (int i = 0; i < listModel.size(); i++) {
+            String item = listModel.getElementAt(i);
+            if (!item.startsWith("⭐")) {
+                return false;
+            }
+        }
+        return true;
+    }
+    private Node getFavoriteNodeAtIndex(int index) {
+        if (playlist == null || index < 0) return null;
+
+        Node current = playlist.head;
+        int currentIndex = 0;
+
+        while (current != null) {
+            if (current.isFavorite()) {
+                if (currentIndex == index) {
+                    return current;
+                }
+                currentIndex++;
+            }
+            current = current.nextNode;
+        }
+        return null;
     }
     
     public static void main(String[] args) {
