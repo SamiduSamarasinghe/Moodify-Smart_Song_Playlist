@@ -1124,15 +1124,15 @@ public class MainFrame extends JFrame {
     }    
     
     private void importPlaylistManual() {
-    DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
-    if (importedPlaylist != null && importedPlaylist.head != null) {
-        this.playlist = importedPlaylist;
-        currentNode = null;
-        isPlaying = false;
-        updatePlayListDisplay();
-        JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
+        DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
+        if (importedPlaylist != null && importedPlaylist.head != null) {
+            this.playlist = importedPlaylist;
+            currentNode = null;
+            isPlaying = false;
+            updatePlayListDisplay();
+            JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
+        }
     }
-}
 }
 
 /*
