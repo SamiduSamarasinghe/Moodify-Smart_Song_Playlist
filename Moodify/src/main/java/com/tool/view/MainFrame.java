@@ -47,10 +47,12 @@ public class MainFrame extends JFrame {
     private boolean autoPlayEnabled = false;
     private Timer autoPlayTimer; // for smart auto play
     
+    
+    
     private String streamUrl;
     private long currentTime;
     private long newTime;
-    private long totalDuration;
+    private long totalDuration;   
 
     //color types for each mood
     private static final Color CALM_COLOR = new Color(200, 230, 200);//green
@@ -290,23 +292,41 @@ public class MainFrame extends JFrame {
         
         panel.add(searchPanel, BorderLayout.NORTH);
         
-    searchButton.addActionListener(e -> searchSongs());
-    
-    searchPanel.add(searchButton);
-    panel.add(searchPanel, BorderLayout.NORTH);
+        searchButton.addActionListener(e -> searchSongs());
+        searchPanel.add(searchButton);
+        panel.add(searchPanel, BorderLayout.NORTH);
 
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
+        
         playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
-        @Override
-        public void mouseClicked(java.awt.event.MouseEvent e) {
-            if (e.getClickCount() == 2) {
-                int index = playListJList.locationToIndex(e.getPoint());
-                if (index >= 0) {
-                    toggleFavorite(index);
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if(e.getClickCount() == 1){ //single click for song play
+                    int index = playListJList.locationToIndex(e.getPoint());
+                    if (index >= 0){
+                        playSelectedSong(index);
+                    }       
+                }else if (e.getClickCount() == 2){ //double click for make song as favorite
+                    int index = playListJList.locationToIndex(e.getPoint());
+
+                    if (index >= 0){
+                        toggleFavorite(index);
+                    }
+                }
+
+            }
+        });
+        playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = playListJList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        toggleFavorite(index);
+                    }
                 }
             }
-        }
         });
         
         JScrollPane scrollPane = new JScrollPane(playListJList);
@@ -315,6 +335,54 @@ public class MainFrame extends JFrame {
 
         return panel;
     }
+    //add new method for play selected song
+    private void playSelectedSong(int index){
+        if(playlist == null || playlist.head == null){
+            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        //get node at the selected index
+        Node selectedNode = getNodeAtIndex(index);
+        if(selectedNode == null){
+            JOptionPane.showMessageDialog(this, "Could not find the selected song", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        //set as current node and play
+        currentNode = selectedNode;
+        isPlaying = true;
+        
+        //reset timer for the new song
+        remainingSeconds = currentNode.getDuration();
+        if(songDurationTimer != null){
+            songDurationTimer.restart();
+        }
+        updateThemeBasedOnMood();
+        
+        //play the song
+        new Thread(() -> {
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(currentNode.songPath);
+            
+            if (streamUrl != null) {
+                //stop current playing song
+                if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null){
+                    embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
+                }
+                //play the new song
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Now Playing: " + currentNode.songName + " - " + currentNode.artistName);
+                    updatePlayListDisplay();
+                });
+            } else { 
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                    updatePlayListDisplay();
+                });
+            }
+        }).start();
+        updatePlayListDisplay();
+    }
+    
     
     private JPanel createControlPanel() {
 
@@ -324,6 +392,9 @@ public class MainFrame extends JFrame {
             "Playlist Controls"
         ));
         panel.setBackground(new Color(250, 250, 250));
+        
+        //volume control
+        JPanel volumePanel = createVolumeControl();
     
         //previous button
         JButton prevButton = createIconButton("<-", "Previous");
@@ -371,6 +442,7 @@ public class MainFrame extends JFrame {
         clearButton.addActionListener(e -> clearPlaylist());
     
         //add buttons to panel in order
+        panel.add(volumePanel);
         panel.add(shuffleButton);
         panel.add(new JSeparator(SwingConstants.VERTICAL));
         panel.add(skipBackButton);
@@ -388,6 +460,53 @@ public class MainFrame extends JFrame {
     
         return panel;
     }
+    
+    //add vloume slider function
+    private JPanel createVolumeControl() {
+        JPanel volumePanel = new JPanel(new BorderLayout(5, 0));
+        volumePanel.setOpaque(false);
+
+        //volume icon
+        JLabel volumeIcon = new JLabel("🔊");
+        volumeIcon.setToolTipText("Volume");
+        volumePanel.add(volumeIcon, BorderLayout.WEST);
+
+        //volume slider
+        JSlider volumeSlider = new JSlider(0, 100, 50);
+        volumeSlider.setPreferredSize(new Dimension(60, 20));
+        volumeSlider.setOpaque(false);
+        volumeSlider.setToolTipText("Adjust volume");
+
+        //set initial volume
+        if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
+            embeddedMediaPlayerComponent.mediaPlayer().audio().setVolume(50);
+        }
+
+        // Add change listener
+        volumeSlider.addChangeListener(e -> {
+            if (!volumeSlider.getValueIsAdjusting() && embeddedMediaPlayerComponent != null && 
+                embeddedMediaPlayerComponent.mediaPlayer() != null) {
+                int volume = volumeSlider.getValue();
+                embeddedMediaPlayerComponent.mediaPlayer().audio().setVolume(volume);
+
+                // Update icon based on volume level
+                if (volume == 0) {
+                    volumeIcon.setText("🔇");
+                } else if (volume < 30) {
+                    volumeIcon.setText("🔈");
+                } else if (volume < 70) {
+                    volumeIcon.setText("🔉");
+                } else {
+                    volumeIcon.setText("🔊");
+                }
+            }
+        });
+
+        volumePanel.add(volumeSlider, BorderLayout.CENTER);
+
+        return volumePanel;
+    }
+    
     //helper method to create icon button
     private JButton createIconButton(String text, String tooltip) {
         JButton button = new JButton(text);
@@ -603,6 +722,7 @@ public class MainFrame extends JFrame {
         listModel.clear();
         if (playlist != null && playlist.head != null) {
             Node current = playlist.head;
+            int index = 0;
             while (current != null) {
                 String songInfo = current.songName + " - " + current.artistName + 
                         " [ " + current.getMoodScore() + " ] "+ " - "
@@ -611,12 +731,43 @@ public class MainFrame extends JFrame {
                 if (current == currentNode && isPlaying){
                     songInfo = "▶ " + songInfo;
                 }
+                //add favorite star
+                if (current.isFavorite()){
+                    songInfo = "⭐ " + songInfo;
+                }
+                
                 listModel.addElement(songInfo);
                 current = current.nextNode;
-                
+                index++;
+            }
+            //highlight current playing song in playlist
+            if (currentNode != null){
+                int currentIndex = getIndexOfNode(currentNode);
+                if(currentIndex >= 0){
+                    playListJList.setSelectedIndex(currentIndex);
+                    playListJList.ensureIndexIsVisible(currentIndex);
+                }
             }
         }
     }
+    //helper method for get index of node
+    private int getIndexOfNode(Node targetNode) {
+        if (playlist == null || playlist.head == null || targetNode == null) return -1;
+
+        Node current = playlist.head;
+        int index = 0;
+
+        while (current != null) {
+            if (current == targetNode) {
+                return index;
+            }
+            current = current.nextNode;
+            index++;
+        }
+
+        return -1;
+    }
+    
     
     //shuffle intensity method
     private int chooseShuffleIntensity() {
@@ -973,15 +1124,15 @@ public class MainFrame extends JFrame {
     }    
     
     private void importPlaylistManual() {
-    DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
-    if (importedPlaylist != null && importedPlaylist.head != null) {
-        this.playlist = importedPlaylist;
-        currentNode = null;
-        isPlaying = false;
-        updatePlayListDisplay();
-        JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
+        DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
+        if (importedPlaylist != null && importedPlaylist.head != null) {
+            this.playlist = importedPlaylist;
+            currentNode = null;
+            isPlaying = false;
+            updatePlayListDisplay();
+            JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
+        }
     }
-}
 }
 
 /*
