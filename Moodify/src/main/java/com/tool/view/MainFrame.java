@@ -722,6 +722,7 @@ public class MainFrame extends JFrame {
         listModel.clear();
         if (playlist != null && playlist.head != null) {
             Node current = playlist.head;
+            int index = 0;
             while (current != null) {
                 String songInfo = current.songName + " - " + current.artistName + 
                         " [ " + current.getMoodScore() + " ] "+ " - "
@@ -730,12 +731,43 @@ public class MainFrame extends JFrame {
                 if (current == currentNode && isPlaying){
                     songInfo = "▶ " + songInfo;
                 }
+                //add favorite star
+                if (current.isFavorite()){
+                    songInfo = "⭐ " + songInfo;
+                }
+                
                 listModel.addElement(songInfo);
                 current = current.nextNode;
-                
+                index++;
+            }
+            //highlight current playing song in playlist
+            if (currentNode != null){
+                int currentIndex = getIndexOfNode(currentNode);
+                if(currentIndex >= 0){
+                    playListJList.setSelectedIndex(currentIndex);
+                    playListJList.ensureIndexIsVisible(currentIndex);
+                }
             }
         }
     }
+    //helper method for get index of node
+    private int getIndexOfNode(Node targetNode) {
+        if (playlist == null || playlist.head == null || targetNode == null) return -1;
+
+        Node current = playlist.head;
+        int index = 0;
+
+        while (current != null) {
+            if (current == targetNode) {
+                return index;
+            }
+            current = current.nextNode;
+            index++;
+        }
+
+        return -1;
+    }
+    
     
     //shuffle intensity method
     private int chooseShuffleIntensity() {
