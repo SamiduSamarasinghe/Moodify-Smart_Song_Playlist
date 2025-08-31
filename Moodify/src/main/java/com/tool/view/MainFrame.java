@@ -903,8 +903,15 @@ public class MainFrame extends JFrame {
             JPanel panel = (JPanel) comp;
 
             // Don't change background of panels that should stay visible
-            if (!shouldKeepOriginalBackground(panel)) {
-                panel.setBackground(themeColor);
+            if (shouldKeepOriginalBackground(panel)) {
+                // Use a slightly darker, less transparent version of the theme color for panels
+                Color panelColor = new Color(
+                    Math.max(0, themeColor.getRed() - 20),
+                    Math.max(0, themeColor.getGreen() - 20), 
+                    Math.max(0, themeColor.getBlue() - 20),
+                    230 // Less transparent
+                );
+                panel.setBackground(panelColor);
                 panel.setOpaque(true);
             }
 
@@ -920,14 +927,46 @@ public class MainFrame extends JFrame {
                 list.setSelectionBackground(themeColor.darker());
                 list.setSelectionForeground(Color.WHITE);
             }
-        } else if (comp instanceof JButton || comp instanceof JTextField || comp instanceof JComboBox) {
-            // These components keep their original appearance for usability
-            comp.setBackground(UIManager.getColor(comp instanceof JButton ? "Button.background" : "TextField.background"));
+        } else if (comp instanceof JButton) {
+            // For buttons, use a solid version of the theme color that provides good contrast
+            JButton button = (JButton) comp;
+                Color buttonColor = new Color(
+                    Math.max(0, themeColor.getRed() - 5),
+                    Math.max(0, themeColor.getGreen() - 5), 
+                    Math.max(0, themeColor.getBlue() - 5),
+                    100 // Less transparent
+                );
+
+            button.setBackground(buttonColor);
+            button.setForeground(getContrastColor(buttonColor)); // Ensure text is readable
+            button.setOpaque(true);
+            button.setBorderPainted(false);
+
+        } else if (comp instanceof JTextField || comp instanceof JComboBox) {
+            // Keep form elements with white background for better usability
+            comp.setBackground(Color.WHITE);
+            comp.setForeground(Color.BLACK);
+        } else if (comp instanceof JLabel) {
+            // Adjust label colors for better readability against the theme
+            JLabel label = (JLabel) comp;
+            label.setForeground(getContrastColor(themeColor));
         } else {
-            // For other components, apply the theme color with slight transparency
-            Color semiTransparent = new Color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 200);
+            // For other components, use a more opaque version of the theme color
+            Color semiTransparent = new Color(
+                themeColor.getRed(), 
+                themeColor.getGreen(), 
+                themeColor.getBlue(), 
+                220 // More opaque than before
+            );
             comp.setBackground(semiTransparent);
         }
+    }
+
+    // Helper method to get a contrasting text color for any background
+    private Color getContrastColor(Color color) {
+        // Calculate luminance (perceived brightness)
+        double luminance = (0.299 * color.getRed() + 0.587 * color.getGreen() + 0.114 * color.getBlue()) / 255;
+        return luminance > 0.5 ? Color.BLACK : Color.WHITE;
     }
 
     private boolean shouldKeepOriginalBackground(JPanel panel) {
