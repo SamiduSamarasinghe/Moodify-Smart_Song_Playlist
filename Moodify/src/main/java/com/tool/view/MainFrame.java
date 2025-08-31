@@ -5,6 +5,7 @@
 package com.tool.view;
 
 import com.tool.controller.AutoClosingDialog;
+import com.tool.controller.BpmDetector;
 import com.tool.controller.MoodShuffler;
 import com.tool.controller.PlaylistSaveHelper;
 import com.tool.controller.PlaylistSorter;
@@ -15,7 +16,15 @@ import com.tool.model.Node;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.List;
+import java.util.ArrayList;
 import javax.swing.*;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 
 //vlcj imports
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
@@ -237,17 +246,40 @@ public class MainFrame extends JFrame {
     moodDropdown.setSelectedIndex(0);
     panel.add(moodDropdown, gbc);
 
-    // Row 5: Add Song Button
-    gbc.gridx = 0; gbc.gridy = 5;
-    gbc.gridwidth = 2;
+    // Row 5: Add Song Button and Help Button
+    gbc.gridx = 1; 
+    gbc.gridy = 5;
+    gbc.gridwidth = 1; // Only span one column
     gbc.anchor = GridBagConstraints.CENTER;
     JButton addButton = new JButton("Add Song");
     addButton.setFont(new Font("Arial", Font.BOLD, 12));
     addButton.setBackground(new Color(60, 180, 75)); // Green background
-    addButton.setForeground(Color.WHITE); // White text
-    addButton.setOpaque(true); // This makes the background color visible
-    addButton.setBorderPainted(false); // This removes the border line
+    addButton.setForeground(Color.WHITE);
+    addButton.setOpaque(true);
+    addButton.setBorderPainted(false);
     addButton.setFocusPainted(false);
+    // Add button to the left side
+    panel.add(addButton, gbc);
+    
+    gbc.gridx = 0; 
+    gbc.gridy = 5;
+    JButton helpButton = new JButton("Help me Moodify");
+    helpButton.setFont(new Font("Arial", Font.BOLD, 12));
+    helpButton.setBackground(new Color(70, 130, 180)); // Blue background
+    helpButton.setForeground(Color.WHITE);
+    helpButton.setOpaque(true);
+    helpButton.setBorderPainted(false);
+    helpButton.setFocusPainted(false);
+    panel.add(helpButton, gbc);
+    
+    helpButton.addMouseListener(new java.awt.event.MouseAdapter(){
+        public void mouseEntered(java.awt.event.MouseEvent e){
+                helpButton.setBackground(new Color(50, 100, 150)); //Darker Blue background
+        }
+        public void mouseExited(java.awt.event.MouseEvent e){
+            helpButton.setBackground(new Color(70, 130, 180)); // Blue background
+        }
+    });
     
     addButton.addMouseListener(new java.awt.event.MouseAdapter() {
     public void mouseEntered(java.awt.event.MouseEvent evt) {
@@ -257,6 +289,93 @@ public class MainFrame extends JFrame {
         addButton.setBackground(new Color(60, 180, 75)); // Original green
     }
 });
+    helpButton.addActionListener(e->{
+        int choice = JOptionPane.showConfirmDialog(
+            this,
+            "Not sure about the mood?\n\n" +
+            "Click YES and Moodify will help you!\n\n" +
+            "We’ll play the first 10 seconds of your song.\n" +
+            "While it plays, tap the SPACEBAR to the beat.\n\n" +
+            "Moodify will figure out the perfect mood for the Song!",
+            "Help Me Moodify",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
+        );
+        
+        final BpmDetector bpmDetector = new BpmDetector();
+        if(choice == 0){
+
+            List<Long> taps = new ArrayList<>();
+
+            JDialog tapDialog = new JDialog(this, "Tap the Beat", true);
+            JLabel info = new JLabel("Tap SPACEBAR to the beat!", SwingConstants.CENTER);
+            tapDialog.add(info);
+            tapDialog.setSize(300, 150);
+            tapDialog.setLocationRelativeTo(this);
+            
+        //run the getStreamLink Method on a separeate thread to avoid frezzing main GUI
+        new Thread(()->{
+            streamUrl = YouTubeUrlHelper.getStreamLinkFromYouTube(urlTextField.getText());
+            //
+            if(streamUrl != null){
+                embeddedMediaPlayerComponent.mediaPlayer().media().play(streamUrl);
+                    
+                    // Add listener to detect when playback starts
+                    embeddedMediaPlayerComponent.mediaPlayer().events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
+                        @Override
+                        public void playing(MediaPlayer mediaPlayer) {
+                            // Start 10s timer AFTER playback begins
+                            new Thread(() -> {
+                                try {
+                                    Thread.sleep(20_000); //stop after 20 seconds
+                                } catch (InterruptedException ex) {
+                                    ex.printStackTrace();
+                                }
+                                embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
+
+                                // Close dialog & trigger BPM detection
+                                SwingUtilities.invokeLater(() -> {
+                                    tapDialog.dispatchEvent(new WindowEvent(tapDialog, WindowEvent.WINDOW_CLOSING));
+                                });
+                            }).start();
+                        }
+                    });
+
+                } else {
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+            }).start();
+        
+            //lisiter for counting key presses and displaying
+            tapDialog.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                        taps.add(System.currentTimeMillis());
+                        info.setText("Taps recorded: " + taps.size());
+                    }
+                }
+            });
+            
+            //to display the bpm and Suggested mood after the keyPress dialog closed
+            tapDialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                String mood = bpmDetector.calculateMoodFromTaps(taps);
+                JOptionPane.showMessageDialog(
+                    tapDialog,
+                    "Moodify suggests: " + mood,
+                    "Result",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        });
+            
+        tapDialog.setVisible(true);
+        }
+    });
     
     addButton.addActionListener(e -> {
         String title = titleTextField.getText().trim();
@@ -301,7 +420,7 @@ public class MainFrame extends JFrame {
 
     JOptionPane.showMessageDialog(this, "Song added successfully and playlist saved!");
     });
-    panel.add(addButton, gbc);
+    //panel.add(addButton, gbc);
 
     return panel;
     }
