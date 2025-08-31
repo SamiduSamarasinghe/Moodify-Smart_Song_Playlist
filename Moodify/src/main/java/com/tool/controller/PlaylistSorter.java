@@ -124,7 +124,7 @@ public class PlaylistSorter {
              
                 //Math.abs use to get the absolute value
                 //compare distens between currentNodes mood socre to 5 and nextNode mood score to 5 swap if there is less distance
-                if(Math.abs(currentNode.getMoodScore()-3) > Math.abs(currentNode.nextNode.getMoodScore() -3)){
+                if(Math.abs(currentNode.getMoodScore()-2) > Math.abs(currentNode.nextNode.getMoodScore() -2)){
                     swapData(currentNode, currentNode.nextNode);
                     swaped = true;
                 }
