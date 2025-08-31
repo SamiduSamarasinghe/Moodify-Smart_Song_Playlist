@@ -482,8 +482,10 @@ public class MainFrame extends JFrame {
 
     private JPanel createCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        searchPanel.setOpaque(false);
         searchPanel.add(new JLabel("Search:"));
         searchField = new JTextField(20);
         searchPanel.add(searchField);
@@ -504,8 +506,14 @@ public class MainFrame extends JFrame {
         listModel = new DefaultListModel<>();
         playListJList = new JList<>(listModel);
 
-        // Remove the complex listener and use a simpler approach
-        // The button text will be updated when needed, not on every list change
+        // Set the custom cell renderer
+        playListJList.setCellRenderer(new SongCellRenderer());
+
+        // Add spacing between items
+        playListJList.setFixedCellHeight(60); // Increased height for better box appearance
+        playListJList.setSelectionBackground(new Color(70, 130, 180));
+        playListJList.setSelectionForeground(Color.WHITE);
+        playListJList.setBackground(new Color(240, 240, 240));
 
         playListJList.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -526,6 +534,9 @@ public class MainFrame extends JFrame {
 
         JScrollPane scrollPane = new JScrollPane(playListJList);
         scrollPane.setPreferredSize(new Dimension(500, 300));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(new Color(240, 240, 240));
+        //enhanceScrollPane(scrollPane);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
@@ -809,24 +820,49 @@ public class MainFrame extends JFrame {
     }
     
     private void performMoodShuffle() {
-        if (playlist != null && playlist.head != null) {
-            //store the current song name before shuffling
-            String currentSongName = (currentNode != null) ? currentNode.songName : null;
-            
-            int intensity = chooseShuffleIntensity();
-            MoodShuffler.moodBasedShuffle(playlist, MoodShuffler.MOOD_CALM, intensity);
-
-            //restore the currentNode after shuffling
-            if (currentSongName != null){
-                currentNode = playlist.findNodeBySongName(currentSongName);
-            }
-            
-            updatePlayListDisplay();
-            JOptionPane.showMessageDialog(this, "Playlist shuffled based on mood!");
-        } else {
-            JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
+    if (playlist != null && playlist.head != null) {
+        // First, let user select target mood
+        String[] moodOptions = {"Calm", "Neutral", "Energetic"};
+        String selectedMood = (String) JOptionPane.showInputDialog(
+            this,
+            "Select target mood for shuffling:",
+            "Mood Selection",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            moodOptions,
+            moodOptions[0]
+        );
+        
+        if (selectedMood == null) return; // User cancelled
+        
+        // Convert string selection to mood constant
+        int targetMood;
+        switch(selectedMood) {
+            case "Calm": targetMood = MoodShuffler.MOOD_CALM; break;
+            case "Neutral": targetMood = MoodShuffler.MOOD_NEUTRAL; break;
+            case "Energetic": targetMood = MoodShuffler.MOOD_ENERGETIC; break;
+            default: targetMood = MoodShuffler.MOOD_CALM;
         }
+        
+        int intensity = chooseShuffleIntensity();
+        
+        // Store current song before shuffling
+        String currentSongName = (currentNode != null) ? currentNode.songName : null;
+        
+        // Pass the SELECTED target mood instead of hardcoded CALM
+        MoodShuffler.moodBasedShuffle(playlist, targetMood, intensity);
+        
+        // Restore current node after shuffling
+        if (currentSongName != null) {
+            currentNode = playlist.findNodeBySongName(currentSongName);
+        }
+        
+        updatePlayListDisplay();
+        JOptionPane.showMessageDialog(this, "Playlist shuffled! Priority: " + selectedMood);
+    } else {
+        JOptionPane.showMessageDialog(this, "Playlist is empty!", "Error", JOptionPane.WARNING_MESSAGE);
     }
+}
     //update theme based on mood
     private void updateThemeBasedOnMood(){
         Color[] targetColors;
@@ -907,6 +943,9 @@ public class MainFrame extends JFrame {
                 );
                 panel.setBackground(panelColor);
                 panel.setOpaque(true);
+            } else {
+                // Make other panels transparent to show theme background
+                panel.setOpaque(false);
             }
 
             // Update child components
@@ -915,10 +954,10 @@ public class MainFrame extends JFrame {
             }
         } else if (comp instanceof JList) {
             // Keep list background white for readability but make selection color match theme
-            comp.setBackground(Color.WHITE);
+            comp.setBackground(new Color(240, 240, 240));
             if (comp instanceof JList) {
                 JList<?> list = (JList<?>) comp;
-                list.setSelectionBackground(themeColor.darker());
+                list.setSelectionBackground(new Color(70, 130, 180));
                 list.setSelectionForeground(Color.WHITE);
             }
         } else if (comp instanceof JButton) {
@@ -1730,13 +1769,87 @@ public class MainFrame extends JFrame {
         applyBackgroundColor(currentBackgroundColor);
     }
     private void startMoodColorCycling() {
-    Timer moodCycleTimer = new Timer(5000, e -> { // Change color every 5 seconds
-        if (currentNode != null && isPlaying) {
-            updateThemeBasedOnMood();
+        Timer moodCycleTimer = new Timer(5000, e -> { // Change color every 5 seconds
+            if (currentNode != null && isPlaying) {
+                updateThemeBasedOnMood();
+            }
+        });
+        moodCycleTimer.start();
+    }
+    
+    class SongCellRenderer extends JPanel implements ListCellRenderer<String> {
+        private JLabel songLabel;
+        private final int arcWidth = 15; // Curved border radius
+        private final int arcHeight = 15;
+
+        public SongCellRenderer() {
+            setLayout(new BorderLayout());
+            setOpaque(false); // Make panel transparent to show spacing
+            setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0)); // Vertical spacing between boxes
+
+            // Main content panel
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setOpaque(false);
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
+
+            songLabel = new JLabel();
+            songLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            songLabel.setOpaque(false);
+
+            contentPanel.add(songLabel, BorderLayout.CENTER);
+            add(contentPanel, BorderLayout.CENTER);
         }
-    });
-    moodCycleTimer.start();
-}
+
+        @Override
+        public Component getListCellRendererComponent(JList<? extends String> list, 
+                String value, int index, boolean isSelected, boolean cellHasFocus) {
+
+            // Set the text
+            songLabel.setText(value);
+
+            // Determine colors based on selection state - make these final
+            final Color backgroundColor = isSelected ? new Color(70, 130, 180) : Color.WHITE;
+            final Color textColor = isSelected ? Color.WHITE : Color.BLACK;
+            final Color borderColor = isSelected ? new Color(50, 100, 150) : new Color(220, 220, 220);
+
+            // Create a custom panel that paints rounded borders
+            JPanel roundedPanel = new JPanel(new BorderLayout()) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    // Draw rounded background
+                    g2.setColor(backgroundColor);
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), arcWidth, arcHeight);
+
+                    // Draw border
+                    g2.setColor(borderColor);
+                    g2.setStroke(new BasicStroke(1.5f));
+                    g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arcWidth, arcHeight);
+
+                    g2.dispose();
+                }
+            };
+
+            roundedPanel.setOpaque(false);
+            roundedPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
+
+            // Create a new label for the rounded panel
+            JLabel contentLabel = new JLabel(value);
+            contentLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            contentLabel.setForeground(textColor);
+            contentLabel.setOpaque(false);
+
+            roundedPanel.add(contentLabel, BorderLayout.CENTER);
+
+            // Remove all components and add the rounded panel
+            removeAll();
+            add(roundedPanel, BorderLayout.CENTER);
+
+            return this;
+        }
+    }
 }
 
 /*
