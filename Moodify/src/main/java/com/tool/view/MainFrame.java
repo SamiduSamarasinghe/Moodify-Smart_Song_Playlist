@@ -211,139 +211,140 @@ public class MainFrame extends JFrame {
 }
     
     private JPanel createInputPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(BorderFactory.createTitledBorder(
-        BorderFactory.createLineBorder(new Color(100, 100, 200), 2), 
-        "Add New Song"
-    ));
-    panel.setBackground(new Color(250, 250, 250));
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setName("inputPanel");
+        panel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(100, 100, 200), 2), 
+            "Add New Song"
+        ));
+        panel.setBackground(new Color(250, 250, 250));
 
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.insets = new Insets(8, 8, 8, 8); // Increased padding
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.weightx = 1.0;
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8); // Increased padding
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-    // Row 0: Song Title
-    gbc.gridx = 0; gbc.gridy = 0;
-    JLabel titleLabel = new JLabel("Song Title:");
-    titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
-    panel.add(titleLabel, gbc);
-    gbc.gridx = 1;
-    titleTextField = new JTextField(20);
-    titleTextField.setFont(new Font("Arial", Font.PLAIN, 12));
-    panel.add(titleTextField, gbc);
+        // Row 0: Song Title
+        gbc.gridx = 0; gbc.gridy = 0;
+        JLabel titleLabel = new JLabel("Song Title:");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        panel.add(titleLabel, gbc);
+        gbc.gridx = 1;
+        titleTextField = new JTextField(20);
+        titleTextField.setFont(new Font("Arial", Font.PLAIN, 12));
+        panel.add(titleTextField, gbc);
 
-    // Row 1: Artist
-    gbc.gridx = 0; gbc.gridy = 1;
-    JLabel artistLabel = new JLabel("Artist:");
-    artistLabel.setFont(new Font("Arial", Font.BOLD, 12));
-    panel.add(artistLabel, gbc);
-    gbc.gridx = 1;
-    artistTextField = new JTextField(20);
-    artistTextField.setFont(new Font("Arial", Font.PLAIN, 12));
-    panel.add(artistTextField, gbc);
+        // Row 1: Artist
+        gbc.gridx = 0; gbc.gridy = 1;
+        JLabel artistLabel = new JLabel("Artist:");
+        artistLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        panel.add(artistLabel, gbc);
+        gbc.gridx = 1;
+        artistTextField = new JTextField(20);
+        artistTextField.setFont(new Font("Arial", Font.PLAIN, 12));
+        panel.add(artistTextField, gbc);
 
-    // Row 2: Duration
-    gbc.gridx = 0; gbc.gridy = 2;
-    JLabel durationLabel = new JLabel("Duration (MM:SS):");
-    durationLabel.setFont(new Font("Arial", Font.BOLD, 12));
-    panel.add(durationLabel, gbc);
-    gbc.gridx = 1;
-    durationTextField = new JTextField(10);
-    durationTextField.setFont(new Font("Arial", Font.PLAIN, 12));
-    durationTextField.setToolTipText("e.g., 3:45");
-    panel.add(durationTextField, gbc);
+        // Row 2: Duration
+        gbc.gridx = 0; gbc.gridy = 2;
+        JLabel durationLabel = new JLabel("Duration (MM:SS):");
+        durationLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        panel.add(durationLabel, gbc);
+        gbc.gridx = 1;
+        durationTextField = new JTextField(10);
+        durationTextField.setFont(new Font("Arial", Font.PLAIN, 12));
+        durationTextField.setToolTipText("e.g., 3:45");
+        panel.add(durationTextField, gbc);
 
-    // Row 3: YouTube URL
-    gbc.gridx = 0; gbc.gridy = 3;
-    JLabel urlLabel = new JLabel("YouTube URL:");
-    urlLabel.setFont(new Font("Arial", Font.BOLD, 12));
-    panel.add(urlLabel, gbc);
-    gbc.gridx = 1;
-    urlTextField = new JTextField(20);
-    urlTextField.setFont(new Font("Arial", Font.PLAIN, 12));
-    panel.add(urlTextField, gbc);
+        // Row 3: YouTube URL
+        gbc.gridx = 0; gbc.gridy = 3;
+        JLabel urlLabel = new JLabel("YouTube URL:");
+        urlLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        panel.add(urlLabel, gbc);
+        gbc.gridx = 1;
+        urlTextField = new JTextField(20);
+        urlTextField.setFont(new Font("Arial", Font.PLAIN, 12));
+        panel.add(urlTextField, gbc);
 
-    // Row 4: Mood Selection
-    gbc.gridx = 0; gbc.gridy = 4;
-    JLabel moodLabel = new JLabel("Mood:");
-    moodLabel.setFont(new Font("Arial", Font.BOLD, 12));
-    panel.add(moodLabel, gbc);
-    gbc.gridx = 1;
+        // Row 4: Mood Selection
+        gbc.gridx = 0; gbc.gridy = 4;
+        JLabel moodLabel = new JLabel("Mood:");
+        moodLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        panel.add(moodLabel, gbc);
+        gbc.gridx = 1;
 
-    String[] moods = {"Select Mood", "Calm", "Neutral", "Energetic"};
-    moodDropdown = new JComboBox<>(moods);
-    moodDropdown.setFont(new Font("Arial", Font.PLAIN, 12));
-    moodDropdown.setSelectedIndex(0);
-    panel.add(moodDropdown, gbc);
+        String[] moods = {"Select Mood", "Calm", "Neutral", "Energetic"};
+        moodDropdown = new JComboBox<>(moods);
+        moodDropdown.setFont(new Font("Arial", Font.PLAIN, 12));
+        moodDropdown.setSelectedIndex(0);
+        panel.add(moodDropdown, gbc);
 
-    // Row 5: Add Song Button
-    gbc.gridx = 0; gbc.gridy = 5;
-    gbc.gridwidth = 2;
-    gbc.anchor = GridBagConstraints.CENTER;
-    JButton addButton = new JButton("Add Song");
-    addButton.setFont(new Font("Arial", Font.BOLD, 12));
-    addButton.setBackground(new Color(60, 180, 75)); // Green background
-    addButton.setForeground(Color.WHITE); // White text
-    addButton.setOpaque(true); // This makes the background color visible
-    addButton.setBorderPainted(false); // This removes the border line
-    addButton.setFocusPainted(false);
-    
-    addButton.addMouseListener(new java.awt.event.MouseAdapter() {
-    public void mouseEntered(java.awt.event.MouseEvent evt) {
-        addButton.setBackground(new Color(45, 160, 60)); // Darker green on hover
-    }
-    public void mouseExited(java.awt.event.MouseEvent evt) {
-        addButton.setBackground(new Color(60, 180, 75)); // Original green
-    }
-});
-    
-    addButton.addActionListener(e -> {
-        String title = titleTextField.getText().trim();
-        String artist = artistTextField.getText().trim();
-        String durationStr = durationTextField.getText().trim();
-        String url = urlTextField.getText().trim();
-        int moodScore = moodDropdown.getSelectedIndex();
-        
-        if (title.isEmpty() || artist.isEmpty() || durationStr.isEmpty() || url.isEmpty() || moodScore == 0) {
-        JOptionPane.showMessageDialog(this, 
-                "Please fill all fields and select a mood!", 
-                "Input Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-        int durationInSeconds = 0;
-    try {
-        String[] parts = durationStr.split(":");
-        if (parts.length == 2) {
-            int minutes = Integer.parseInt(parts[0]);
-            int seconds = Integer.parseInt(parts[1]);
-            durationInSeconds = minutes * 60 + seconds;
-        } else {
-            throw new NumberFormatException("Invalid format");
+        // Row 5: Add Song Button
+        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        JButton addButton = new JButton("Add Song");
+        addButton.setFont(new Font("Arial", Font.BOLD, 12));
+        addButton.setBackground(new Color(60, 180, 75)); // Green background
+        addButton.setForeground(Color.WHITE); // White text
+        addButton.setOpaque(true); // This makes the background color visible
+        addButton.setBorderPainted(false); // This removes the border line
+        addButton.setFocusPainted(false);
+
+        addButton.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseEntered(java.awt.event.MouseEvent evt) {
+            addButton.setBackground(new Color(45, 160, 60)); // Darker green on hover
         }
-    } catch (NumberFormatException ex) {
-        JOptionPane.showMessageDialog(this, 
-                "Invalid duration format. Please use MM:SS (e.g., 3:45).", 
-                "Input Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-    playlist.insertSong(title, artist, durationInSeconds, url, moodScore);
-    
-    PlaylistSaveHelper.savePlaylistToFile(playlist);
-    
-    titleTextField.setText("");
-    artistTextField.setText("");
-    durationTextField.setText("");
-    urlTextField.setText("");
-    moodDropdown.setSelectedIndex(0);
-
-    updatePlayListDisplay();
-
-    JOptionPane.showMessageDialog(this, "Song added successfully and playlist saved!");
+        public void mouseExited(java.awt.event.MouseEvent evt) {
+            addButton.setBackground(new Color(60, 180, 75)); // Original green
+        }
     });
-    panel.add(addButton, gbc);
 
-    return panel;
+        addButton.addActionListener(e -> {
+            String title = titleTextField.getText().trim();
+            String artist = artistTextField.getText().trim();
+            String durationStr = durationTextField.getText().trim();
+            String url = urlTextField.getText().trim();
+            int moodScore = moodDropdown.getSelectedIndex();
+
+            if (title.isEmpty() || artist.isEmpty() || durationStr.isEmpty() || url.isEmpty() || moodScore == 0) {
+            JOptionPane.showMessageDialog(this, 
+                    "Please fill all fields and select a mood!", 
+                    "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+            int durationInSeconds = 0;
+        try {
+            String[] parts = durationStr.split(":");
+            if (parts.length == 2) {
+                int minutes = Integer.parseInt(parts[0]);
+                int seconds = Integer.parseInt(parts[1]);
+                durationInSeconds = minutes * 60 + seconds;
+            } else {
+                throw new NumberFormatException("Invalid format");
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, 
+                    "Invalid duration format. Please use MM:SS (e.g., 3:45).", 
+                    "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        playlist.insertSong(title, artist, durationInSeconds, url, moodScore);
+
+        PlaylistSaveHelper.savePlaylistToFile(playlist);
+
+        titleTextField.setText("");
+        artistTextField.setText("");
+        durationTextField.setText("");
+        urlTextField.setText("");
+        moodDropdown.setSelectedIndex(0);
+
+        updatePlayListDisplay();
+
+        JOptionPane.showMessageDialog(this, "Song added successfully and playlist saved!");
+        });
+        panel.add(addButton, gbc);
+
+        return panel;
     }
     
     private JPanel createCenterPanel() {
@@ -469,8 +470,7 @@ public class MainFrame extends JFrame {
             BorderFactory.createLineBorder(new Color(150, 150, 200), 2), 
             "Playlist Controls"
         ));
-        panel.setOpaque(true); // Ensure panel is opaque
-        panel.setBackground(new Color(250, 250, 250, 230)); // Semi-transparent white
+        panel.setBackground(new Color(240, 240, 240));
         
         //volume control
         JPanel volumePanel = createVolumeControl();
@@ -603,13 +603,13 @@ public class MainFrame extends JFrame {
         //add hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(50, 110, 160));
+                button.setBackground(new Color(50, 110, 160)); // Darker blue on hover
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(70, 130, 180));
+                button.setBackground(new Color(70, 130, 180)); // Original blue
             }
         });
-        return button;
+    return button;
     }
     //helper method to create toggle button with play/pause states
     private JToggleButton createToggleButton(String playIcon, String pauseIcon, String playTooltip, String pauseTooltip){
@@ -750,7 +750,7 @@ public class MainFrame extends JFrame {
         int blue = (int) (currentBackgroundColor.getBlue() * (1 - ratio) + targetBackgroundColor.getBlue() * ratio);
 
         Color intermediateColor = new Color(red, green, blue);
-        applyBackgroundColor(intermediateColor);
+        applyBackgroundColorToAll(intermediateColor);
 
         transitionStep++;
     }
@@ -772,10 +772,18 @@ public class MainFrame extends JFrame {
         if (comp instanceof JPanel) {
             JPanel panel = (JPanel) comp;
 
-            // Don't change background of panels that should stay visible
-            if (!shouldKeepOriginalBackground(panel)) {
-                panel.setBackground(themeColor);
-                panel.setOpaque(true);
+            // Keep control panels with solid background for readability
+            if (panel.getName() != null && panel.getName().equals("controlPanel")) {
+                panel.setBackground(new Color(240, 240, 240));
+            } else if (panel.getName() != null && panel.getName().equals("inputPanel")) {
+                panel.setBackground(new Color(250, 250, 250));
+            } else {
+                panel.setBackground(new Color(
+                    themeColor.getRed(), 
+                    themeColor.getGreen(), 
+                    themeColor.getBlue(), 
+                    200
+                ));
             }
 
             // Update child components
@@ -783,20 +791,45 @@ public class MainFrame extends JFrame {
                 updateComponentColor(child, themeColor);
             }
         } else if (comp instanceof JList) {
-            // Keep list background white for readability but make selection color match theme
             comp.setBackground(Color.WHITE);
             if (comp instanceof JList) {
                 JList<?> list = (JList<?>) comp;
                 list.setSelectionBackground(themeColor.darker());
                 list.setSelectionForeground(Color.WHITE);
             }
-        } else if (comp instanceof JButton || comp instanceof JTextField || comp instanceof JComboBox) {
-            // These components keep their original appearance for usability
-            comp.setBackground(UIManager.getColor(comp instanceof JButton ? "Button.background" : "TextField.background"));
-        } else {
-            // For other components, apply the theme color with slight transparency
-            Color semiTransparent = new Color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 200);
-            comp.setBackground(semiTransparent);
+        }
+        // Don't change background for buttons, text fields, etc. - they keep their default look
+    }
+    private void applyBackgroundColorToAll(Color color) {
+        currentBackgroundColor = color;
+
+        // Apply to main content pane
+        getContentPane().setBackground(color);
+
+        // Apply to all nested components that can accept background colors
+        applyColorToAllComponents(getContentPane(), color);
+
+        repaint();
+    }
+
+    // Helper method to apply color to all components recursively:
+    private void applyColorToAllComponents(Container container, Color color) {
+        for (Component comp : container.getComponents()) {
+            // Only set background for components that support it
+            try {
+                if (comp instanceof JPanel || comp instanceof JLabel) {
+                    comp.setBackground(color);
+                    if (comp instanceof JPanel) {
+                        ((JPanel) comp).setOpaque(true);
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore components that don't support setBackground
+            }
+
+            if (comp instanceof Container) {
+                applyColorToAllComponents((Container) comp, color);
+            }
         }
     }
 
@@ -1358,14 +1391,14 @@ public class MainFrame extends JFrame {
     }    
     
     private void importPlaylistManual() {
-        DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
-        if (importedPlaylist != null && importedPlaylist.head != null) {
-            this.playlist = importedPlaylist;
-            currentNode = null;
-            isPlaying = false;
-            updatePlayListDisplay();
-            JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
-        }
+    DoublyLinkedList importedPlaylist = PlaylistSaveHelper.loadPlaylistManual(this);
+    if (importedPlaylist != null && importedPlaylist.head != null) {
+        this.playlist = importedPlaylist;
+        currentNode = null;
+        isPlaying = false;
+        updatePlayListDisplay();
+        JOptionPane.showMessageDialog(this, "Playlist imported successfully!");
+    }
     }
     //method for initialize the color transisition
     private void initializeColorTransition() {
@@ -1375,8 +1408,8 @@ public class MainFrame extends JFrame {
         colorTransitionTimer = new Timer(TRANSITION_DELAY, e -> updateColorTransition());
         colorTransitionTimer.setRepeats(true);
 
-        // Set initial background
-        applyBackgroundColor(currentBackgroundColor);
+        // Set initial background for entire GUI
+        applyBackgroundColorToAll(currentBackgroundColor);
     }
     private void startMoodColorCycling() {
     Timer moodCycleTimer = new Timer(5000, e -> { // Change color every 5 seconds
@@ -1387,6 +1420,7 @@ public class MainFrame extends JFrame {
     moodCycleTimer.start();
 }
 }
+
 
 /*
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
