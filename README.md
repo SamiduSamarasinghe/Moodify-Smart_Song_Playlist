@@ -35,10 +35,10 @@ It is lightweight, offline-capable, and customizable.
 ---
 
 ## 🛠️ Tech Stack  
-- **Language:** C / Java  
+- **Language:** Java  
 - **Data Structure:** Doubly Linked List  
-- **IDE:** VS Code / IntelliJ / Eclipse  
-- **Platform:** Console-based Application  
+- **IDE:** VS Code / IntelliJ / Eclipse 
+- **UI/Platform:** Java Swing 
 
 ---
 
