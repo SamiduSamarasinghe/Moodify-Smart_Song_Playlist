@@ -4,11 +4,11 @@
  */
 package com.tool.view;
 
-import com.tool.control.MoodShuffler;
-import com.tool.control.PlaylistSaveHelper;
-import com.tool.control.PlaylistSorter;
-import com.tool.control.YouTubeUrlHelper;
-import com.tool.control.RemoveSong;
+import com.tool.controller.MoodShuffler;
+import com.tool.controller.PlaylistSaveHelper;
+import com.tool.controller.PlaylistSorter;
+import com.tool.controller.YouTubeUrlHelper;
+import com.tool.controller.RemoveSong;
 import com.tool.model.DoublyLinkedList;
 import com.tool.model.Node;
 import java.awt.*;
