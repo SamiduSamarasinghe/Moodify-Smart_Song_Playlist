@@ -407,13 +407,30 @@ public class MainFrame extends JFrame {
             tapDialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                //show a dialog box with out any button 
                 String mood = bpmDetector.calculateMoodFromTaps(taps);
-                JOptionPane.showMessageDialog(
-                    tapDialog,
-                    "Moodify suggests: " + mood,
-                    "Result",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
+                JDialog resultDialog = new JDialog((Frame) null, true);
+                resultDialog.setUndecorated(true);
+                resultDialog.setSize(350, 150);
+                resultDialog.setLocationRelativeTo(tapDialog);
+
+                JLabel label = new JLabel("Moodify suggests: " + mood, SwingConstants.CENTER);
+                label.setFont(new Font("SansSerif", Font.BOLD, 18));
+                label.setBorder(BorderFactory.createLineBorder(Color.GRAY, 2));
+                resultDialog.add(label);
+
+                // Still block keys if needed
+                resultDialog.addKeyListener(new KeyAdapter() {
+                    @Override
+                    public void keyPressed(KeyEvent e) {
+                        e.consume();
+                    }
+                });
+
+                resultDialog.setFocusable(true);
+                
+                new javax.swing.Timer(3000, evt -> resultDialog.dispose()).start();
+                resultDialog.setVisible(true);
             }
         });
             
@@ -713,7 +730,6 @@ public class MainFrame extends JFrame {
         button.setFocusPainted(false);
         button.setMargin(new Insets(2, 5, 2, 5));
 
-        
         //add hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
