@@ -1457,49 +1457,98 @@ public class MainFrame extends JFrame {
         }
     }
 }
-                   // search song 
-        
-        private void searchSongs() {
-    String searchTerm = searchField.getText().trim();
     
+// search song 
+        
+   private void searchSongs() {
+    String searchTerm = searchField.getText().trim();
+
     if (searchTerm.isEmpty()) {
         JOptionPane.showMessageDialog(this, "Please enter a search term!", "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
-    
-    java.util.List<String> results = new java.util.ArrayList<>();
+
+    java.util.List<Node> foundNodes = new java.util.ArrayList<>();
     Node current = playlist.head;
-    
+
     while (current != null) {
         if (current.songName.toLowerCase().contains(searchTerm.toLowerCase()) ||
             current.artistName.toLowerCase().contains(searchTerm.toLowerCase())) {
-            
-            String songInfo = current.songName + " - " + current.artistName + 
-                " [ " + current.getMoodScore() + " ] " + " - " +
-                playlistSorter.formatDuration(current.getDuration());
-            
-            results.add(songInfo);
+
+            foundNodes.add(current);
         }
         current = current.nextNode;
     }
-    
-    if (results.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "No songs found with: '" + searchTerm + "'", 
-            "Search Results", 
+
+    if (foundNodes.isEmpty()) {
+        JOptionPane.showMessageDialog(this,
+            "No songs found with: '" + searchTerm + "'",
+            "Search Results",
             JOptionPane.INFORMATION_MESSAGE);
     } else {
-        StringBuilder message = new StringBuilder("Found " + results.size() + " song(s):\n\n");
-        for (int i = 0; i < results.size(); i++) {
-            message.append(i + 1).append(". ").append(results.get(i)).append("\n");
+        // Build list model
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Node song : foundNodes) {
+            String songInfo = song.songName + " - " + song.artistName +
+                    " [ " + song.getMoodScore() + " ] " + " - " +
+                    playlistSorter.formatDuration(song.getDuration());
+            listModel.addElement(songInfo);
         }
-        
-        JOptionPane.showMessageDialog(this, 
-            message.toString(), 
-            "Search Results for: '" + searchTerm + "'", 
-            JOptionPane.INFORMATION_MESSAGE);
+
+        // Create JList
+        JList<String> resultList = new JList<>(listModel);
+        resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // put items in a scroll pane
+        JScrollPane scrollPane = new JScrollPane(resultList);
+        scrollPane.setPreferredSize(new Dimension(400, 200));
+
+        int option = JOptionPane.showConfirmDialog(this, scrollPane,
+                "Search Results for: '" + searchTerm + "'",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
+
+        if (option == JOptionPane.OK_OPTION && !resultList.isSelectionEmpty()) {
+            int selectedIndex = resultList.getSelectedIndex();
+            Node selectedSong = foundNodes.get(selectedIndex);
+
+            //selected song
+            JOptionPane.showMessageDialog(this,
+                    "Loading selected:\n" + selectedSong.songName + " - " + selectedSong.artistName,
+                    "Song Selected",
+                    JOptionPane.INFORMATION_MESSAGE);
+            
+            
+            new Thread(()->{
+               try{
+                   String url = YouTubeUrlHelper.getStreamLinkFromYouTube(selectedSong.songPath);
+
+                    if (url != null) {
+                        if (embeddedMediaPlayerComponent != null && embeddedMediaPlayerComponent.mediaPlayer() != null) {
+                            embeddedMediaPlayerComponent.mediaPlayer().controls().stop();
+                        }
+                        embeddedMediaPlayerComponent.mediaPlayer().media().play(url);
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(this, "Now Playing: " + selectedSong.songName + " - " + selectedSong.artistName);
+                            updatePlayListDisplay();
+                        });
+                    } else {
+                        SwingUtilities.invokeLater(() -> {
+                            JOptionPane.showMessageDialog(this, "Failed to get stream URL!", "Error", JOptionPane.ERROR_MESSAGE);
+                            updatePlayListDisplay();
+                        });
+                    }
+                    
+
+               }catch(Exception e){
+                   JOptionPane.showMessageDialog(this,"Unexpected Error happend while trying to play selected song");
+               }
+            }).start();
+            updatePlayListDisplay();
+        }
     }
 }
+
     private Node getNodeAtIndex(int index) {
         if (playlist == null || index < 0) return null;
     
