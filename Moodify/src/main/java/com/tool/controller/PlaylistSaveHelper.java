@@ -5,6 +5,8 @@
 package com.tool.controller;
 
 import com.tool.model.DoublyLinkedList;
+import com.tool.model.Node;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,37 +25,64 @@ public class PlaylistSaveHelper {
     
     
 // Save playlist to file automatically on exit
-    public static void savePlaylistToFile(DoublyLinkedList playlist) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("playlist.dat"))) {
-            oos.writeObject(playlist);
-            System.out.println("Playlist automatically saved to playlist.dat");
-        } catch (IOException ex) {
-            System.out.println("Error saving playlist: " + ex.getMessage());
+public static void savePlaylistToFile(DoublyLinkedList playlist) {
+    try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("playlist.dat"))) {
+        oos.writeObject(playlist);
+        System.out.println("Playlist automatically saved to playlist.dat");
+        // Debug: Check if favorites are being saved
+        if (playlist != null && playlist.head != null) {
+            Node current = playlist.head;
+            int favoriteCount = 0;
+            while (current != null) {
+                if (current.isFavorite()) {
+                    favoriteCount++;
+                }
+                current = current.nextNode;
+            }
+            System.out.println("Saved " + favoriteCount + " favorite songs");
         }
+    } catch (IOException ex) {
+        System.out.println("Error saving playlist: " + ex.getMessage());
     }
+}
     
         // Load playlist from file automatically on startup
-    public static DoublyLinkedList loadPlaylistFromFile() {
-        File file = new File("playlist.dat");
-        if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                System.out.println("Playlist loaded from file successfully!");
-                return (DoublyLinkedList) ois.readObject();
-                
-            } catch (IOException | ClassNotFoundException ex) {
-                System.out.println("Error loading playlist: " + ex.getMessage());
-                return new DoublyLinkedList(); // Create new if load fails
+        public static DoublyLinkedList loadPlaylistFromFile() {
+            File file = new File("playlist.dat");
+            if (file.exists()) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                    DoublyLinkedList loadedPlaylist = (DoublyLinkedList) ois.readObject();
+                    System.out.println("Playlist loaded from file successfully!");
+
+                    // Debug: Check if favorites are being loaded
+                    if (loadedPlaylist != null && loadedPlaylist.head != null) {
+                        Node current = loadedPlaylist.head;
+                        int favoriteCount = 0;
+                        while (current != null) {
+                            if (current.isFavorite()) {
+                                favoriteCount++;
+                            }
+                            current = current.nextNode;
+                        }
+                        System.out.println("Loaded " + favoriteCount + " favorite songs");
+                    }
+
+                    return loadedPlaylist;
+
+                } catch (IOException | ClassNotFoundException ex) {
+                    System.out.println("Error loading playlist: " + ex.getMessage());
+                    return new DoublyLinkedList(); // Create new if load fails
+                }
             }
-        } 
-        
-        return new DoublyLinkedList(); 
-    }
-    
+
+            return new DoublyLinkedList();
+        }
+
     public static DoublyLinkedList loadPlaylistManual(JFrame parent){
-        
+
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Load Playlist");
-        
+
         if (fileChooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
@@ -62,7 +91,7 @@ public class PlaylistSaveHelper {
 //                updatePlayListDisplay();
 
             } catch (IOException | ClassNotFoundException ex) {
-                JOptionPane.showMessageDialog(parent, "Error loading playlist: " + ex.getMessage(), 
+                JOptionPane.showMessageDialog(parent, "Error loading playlist: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
                 return new DoublyLinkedList();
             }
