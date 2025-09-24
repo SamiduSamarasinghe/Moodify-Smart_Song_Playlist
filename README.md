@@ -1,96 +1,131 @@
-# 🎵 Moodify  
-*A Smart Playlist Manager using Doubly Linked List*  
+🎵 Moodify
+A Smart Mood-Based Music Player with Visual Playback
 
----
+📌 About the Project
+Moodify is an intelligent music player that organizes and plays songs based on mood analysis. Unlike traditional players that shuffle randomly, Moodify uses mood-based sorting and intelligent shuffling with three intensity levels. It supports both local files and YouTube streaming with video playback capability.
 
-## 📌 About the Project  
-Moodify is a simple music playlist manager that arranges and plays songs based on **mood**.  
-Unlike normal players that shuffle randomly, Moodify sorts and shuffles songs with **mood priority**.  
-It is lightweight, offline-capable, and customizable.  
+🚀 Features
+🎵 Core Playback Features
+⏯️ Play/Pause/Next/Previous with seamless navigation
 
----
+⏩ 10-second Skip forward/backward for precise control
 
-## 🚀 Features  
+⭐ Favorite Management - Mark/remove favorites with visual indicators
 
-### 🎵 Core Features  
-- ➕ Add / ➖ Remove / 🔍 Search songs  
-- ⏭️ Next / ⏮️ Previous navigation  
-- 🌀 Mood-based shuffle (not random)  
-- 📊 Sort playlist by mood/artist/genre  
-- 💾 Save last played position  
+🔊 Volume Control with visual feedback
 
-### 🎨 Advanced Features  
-- 👤 User profiles with favorite moods & genres  
-- 🏷️ Custom mood tags (e.g., *Rainy Evening*, *Exam Stress*)  
-- 🤝 Collaborative playlist (friends can add songs)  
-- 📈 Playlist statistics (% songs per mood)  
-- 💡 Mood suggestions (*Feeling calm? Try this mix*)  
-- 📤 Export playlist as text/CSV  
+📊 Progress Slider with interactive seeking
 
-### 🌟 Unique Features  
-- 📶 **Offline Mode** – works without internet  
-- 🎯 **Focus Mode** – distraction-free listening  
-- ⭐ **Song Ratings** – rate songs for better recommendations  
+🎼 Playlist Management
+➕ Add Songs with title, artist, duration, mood score, and file path/URL
 
----
+➖ Remove Songs with right-click context menu
 
-## 🛠️ Tech Stack  
-- **Language:** Java  
-- **Data Structure:** Doubly Linked List  
-- **IDE:** VS Code / IntelliJ / Eclipse 
-- **UI/Platform:** Java Swing 
+🔍 Search Songs by title or artist name
 
----
+💾 Auto-save/Load playlist on startup/exit
 
+📥📤 Import/Export playlist files manually
 
-## 📖 How It Works  
-1. 🎶 Add songs with title, artist, duration, and mood.  
-2. 🔀 Shuffle or sort playlist based on mood.  
-3. 📊 View playlist stats and mood suggestions.  
-4. ⏯️ Play next/previous song easily.  
-5. 📤 Export playlist to text/CSV file.  
+🎭 Mood Intelligence
+🎯 Mood-Based Sorting (Calm → Neutral → Energetic)
 
----
+🔀 Smart Shuffling with 3 intensity levels:
 
-## 🎯 Why Doubly Linked List?  
-✔️ Fast add/remove anywhere in playlist  
-✔️ Easy forward & backward traversal  
-✔️ Perfect for dynamic rearranging by mood  
+Light: Shuffle within mood groups
 
----
+Medium: Shuffle within moods + mood priority
 
-## 📅 Development Timeline (6 Days)  
-- **Day 1–2:** Implement linked list (add/remove/search).  
-- **Day 3:** Add mood sorting + shuffle.  
-- **Day 4:** Add user commands + playlist save.  
-- **Day 5:** Add advanced features (mood tags, stats).  
-- **Day 6:** Testing + documentation.  
+High: Complete random shuffle
 
----
+⏱️ Time-based Sorting (ascending/descending duration)
 
-## 📊 Comparison with Other Apps  
-| Feature              | Spotify | YouTube Music | Moodify |
-|----------------------|---------|----------------|---------|
-| AI Mood Sorting      | ✅      | ❌             | ✅      |
-| Offline Support      | ❌      | ❌             | ✅      |
-| Lightweight (console)| ❌      | ❌             | ✅      |
-| Collaborative List   | ✅      | ❌             | ✅      |
-| Custom Mood Tags     | ❌      | ❌             | ✅      |
+🌟 Unique Features
+🎵 "Help Me Moodify" - BPM detection for automatic mood classification
 
----
+🎨 Dynamic Visual Themes - UI colors change based on current song's mood
 
-## 👨‍💻 Team Members  
-- 👤 W. C. L. M. Weliwita  
-- 👤 L. K. A. S. R. Wimalarathna  
-- 👤 S. J. G. Samarasinghe  
-- 👤 J. G. W. Deminda  
+📹 Video Support - Play YouTube videos and local video files
 
----
+🔄 Favorite-Only View - Filter to show only starred songs
 
-## 📜 License  
-This project is created for **academic purposes** at  
-**National Institute of Business Management (NIBM)**.  
+🎮 VLC Integration - Professional-grade media playback
 
----
+🛠️ Tech Stack
+Language: Java
 
-✨ *Moodify – Organize your playlist, match your mood.* ✨
+GUI Framework: Java Swing with custom rendering
+
+Data Structure: Custom Doubly Linked List
+
+Media Engine: VLCJ for audio/video playback
+
+YouTube Integration: yt-dlp for stream extraction
+
+Algorithms: Bubble Sort for playlist organization
+
+📖 How It Works
+🎶 Add Songs via form (local files or YouTube URLs)
+
+🎵 Play Music with single-click on any song
+
+⭐ Mark Favorites with double-click or right-click menu
+
+🔀 Mood Shuffle with target mood and intensity selection
+
+📊 Sort Playlist by mood or duration
+
+🔍 Search through your music library
+
+💾 Auto-save your progress automatically
+
+🎯 Why Doubly Linked List?
+✔️ Efficient insertions/deletions at any position (O(1) for head/tail)
+✔️ Bidirectional traversal perfect for next/previous navigation
+✔️ Dynamic memory allocation for flexible playlist sizes
+✔️ Natural fit for playlist management with forward/backward movement
+
+🎨 UI/UX Features
+Custom Cell Renderer with rounded song entries
+
+Right-click Context Menu for quick actions
+
+Visual Indicators for currently playing and favorite songs
+
+Responsive Design with hover effects and smooth transitions
+
+Mood-based Color Cycling with animated background themes
+
+📊 Competitive Advantage
+Feature	Spotify	YouTube Music	Moodify
+Mood-Based Organization	❌	❌	✅
+BPM Mood Detection	❌	❌	✅
+Local File Support	Limited	❌	✅
+Video Playback	❌	❌	✅
+No Ads	Premium Only	Premium Only	✅
+Offline Capable	Limited	Limited	✅
+
+👥 Team Members
+👤 W. C. L. M. Weliwita
+
+👤 L. K. A. S. R. Wimalarathna
+
+👤 S. J. G. Samarasinghe
+
+👤 J. G. W. Deminda
+
+📜 Academic Project
+Developed as part of the Data Structures and Algorithms course at
+National Institute of Business Management (NIBM)
+Demonstrating practical application of doubly linked lists in real-world software
+
+✨ Moodify – Feel the music, match your mood. ✨
+
+🔧 System Requirements
+Java 8 or higher
+
+VLC Media Player installed for video playback
+
+Internet connection for YouTube streaming
+
+Windows/Linux/macOS compatible
